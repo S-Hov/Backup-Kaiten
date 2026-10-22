@@ -77,6 +77,26 @@ class ClientTests(unittest.TestCase):
 
 
 class BackupTests(unittest.TestCase):
+    def test_space_url_can_list_boards_without_board_id(self):
+        with tempfile.TemporaryDirectory() as d:
+            cfg = Path(d) / 'config.toml'
+            cfg.write_text('[kaiten]\nboard_url="https://company.kaiten.ru/space/169965/boards"\nboard_id=0\n', encoding='utf-8')
+            value = load_config(cfg, require_token=False, require_board=False)
+            self.assertEqual(value['kaiten']['space_id'], 169965)
+            with self.assertRaisesRegex(ValueError, '--list-boards'):
+                load_config(cfg, require_token=False)
+
+    def test_list_boards_prints_board_ids(self):
+        with tempfile.TemporaryDirectory() as d:
+            cfg = Path(d) / 'config.toml'
+            cfg.write_text('[kaiten]\nboard_url="https://company.kaiten.ru/space/169965/boards"\n', encoding='utf-8')
+            with patch.dict('os.environ', {'KAITEN_API_TOKEN': 'TEST'}):
+                with patch.object(Client, 'fetch', return_value=[{'id': 7, 'board_id': 7, 'title': 'Orders'}]) as fetch:
+                    with patch('sys.stdout', new_callable=io.StringIO) as output:
+                        self.assertEqual(main(['--config', str(cfg), '--list-boards']), 0)
+                    self.assertIn('board_id = 7', output.getvalue())
+                    fetch.assert_called_once_with('/spaces/169965/boards')
+
     def test_resume_detects_corrupt_json(self):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d) / 'snapshot'

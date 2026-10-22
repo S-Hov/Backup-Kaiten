@@ -15,6 +15,7 @@ def parser():
     p = argparse.ArgumentParser(description='Резервная копия Kaiten. Только GET; данные сервиса не изменяются.')
     p.add_argument('--config', default=str(Path(__file__).with_name('config.toml')), help='TOML-конфиг')
     p.add_argument('--list-functions', action='store_true', help='Показать каталог функций без подключения')
+    p.add_argument('--list-boards', action='store_true', help='Получить названия и ID досок пространства из board_url')
     p.add_argument('--plan', action='store_true', help='Проверить конфиг и показать план без сети и токена')
     p.add_argument('--full-cards', action='store_true', help='Карточки, все поддержанные связи, файлы и справочники полей')
     p.add_argument('--all', action='store_true', help='Полные карточки плюс структура доски и справочники')
@@ -37,6 +38,24 @@ def main(argv=None):
             print(group + ':')
             for name, e in catalog.items():
                 print(f'  --{name:14} ' + (e if isinstance(e, str) else f'{e.description}: GET {e.path} [{e.mode}]'))
+        return 0
+    if a.list_boards:
+        if a.plan:
+            p.error('--list-boards обращается к API и не совмещается с --plan')
+        cfg = load_config(a.config, require_board=False)
+        k = cfg['kaiten']
+        if not k.get('space_id'):
+            p.error('Для --list-boards укажите board_url со ссылкой /space/ID/boards')
+        client = Client(k['origin'], k['token'], cfg['performance'])
+        boards = client.fetch(f'/spaces/{k["space_id"]}/boards')
+        if not isinstance(boards, list):
+            raise BackupError('Ожидался список досок от API')
+        print(f'Пространство {k["space_id"]}. Досок: {len(boards)}')
+        for board in boards:
+            bid = board.get('board_id') or board.get('id')
+            title = str(board.get('title', '')).replace('\r', ' ').replace('\n', ' ')
+            print(f'  board_id = {bid}    {title}')
+        print('Укажите ID нужной доски в config.toml, затем повторите --all --plan.')
         return 0
     if a.verify:
         from kaiten_backup.storage import digest

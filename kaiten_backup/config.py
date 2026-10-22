@@ -6,7 +6,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 
-def load_config(path, require_token=True):
+def load_config(path, require_token=True, require_board=True):
     path = Path(path).resolve()
     with path.open('rb') as f:
         cfg = tomllib.load(f)
@@ -17,23 +17,30 @@ def load_config(path, require_token=True):
     if 'YOUR-COMPANY' in u.hostname.upper():
         raise ValueError('Замените YOUR-COMPANY в config.toml')
     k['origin'] = f'https://{u.hostname}'
+    space = re.search(r'/spaces?/(\d+)(?:/|$)', u.path)
+    k['space_id'] = int(space[1]) if space else None
     bid = k.get('board_id', 0)
     if not bid:
         m = re.search(r'/boards/(\d+)(?:/|$)', u.path)
         bid = int(m[1]) if m else 0
-    if isinstance(bid, bool) or not isinstance(bid, int) or bid <= 0:
-        raise ValueError('Укажите положительный board_id конкретной доски')
+    if isinstance(bid, bool) or not isinstance(bid, int) or bid < 0:
+        raise ValueError('board_id должен быть положительным целым числом или 0 для определения по ссылке')
+    if require_board and bid == 0:
+        raise ValueError(
+            'В ссылке указан раздел досок пространства, а ID конкретной доски отсутствует. '
+            'Выполните python backup.py --list-boards и запишите ID нужной доски '
+            'в board_id в config.toml.')
     k['board_id'] = bid
     env_path = path.parent / k.get('env_file', '.env')
     local_env = {}
-    if env_path.exists():
+    if require_token and env_path.exists():
         for line in env_path.read_text(encoding='utf-8-sig').splitlines():
             line = line.strip()
             if line and not line.startswith('#') and '=' in line:
                 name, value = line.split('=', 1)
                 local_env[name.strip()] = value.strip().strip('\"\'')
     name = k.get('token_env', 'KAITEN_API_TOKEN')
-    k['token'] = os.environ.get(name) or local_env.get(name, '')
+    k['token'] = (os.environ.get(name) or local_env.get(name, '')) if require_token else ''
     if require_token and (not k['token'] or k['token'] == 'PASTE_TOKEN_HERE'):
         raise ValueError(f'Заполните {name} в {env_path} или переменной окружения')
     b = cfg.setdefault('backup', {})

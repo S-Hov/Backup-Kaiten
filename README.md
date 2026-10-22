@@ -35,6 +35,10 @@ cd C:\work\backups\doska_kaiten
 # Каталог доступных функций; не требует конфига и сети.
 python backup.py --list-functions
 
+# Если есть только ссылка /space/123/boards, узнать ID досок через API.
+# Нужен заполненный токен в .env; board_id пока может быть равен 0.
+python backup.py --list-boards
+
 # Проверить конфиг и показать состав выгрузки. Сеть и токен не нужны.
 python backup.py --all --plan
 
