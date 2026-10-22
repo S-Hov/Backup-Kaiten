@@ -1,0 +1,30 @@
+# Python 3.11+. Скопируйте в config.toml.
+[kaiten]
+board_url = "https://YOUR-COMPANY.kaiten.ru/space/123/boards"
+# В ссылке на пространство может не быть номера конкретной доски.
+# Укажите его явно (не ID пространства и не ID карточки).
+board_id = 0
+token_env = "KAITEN_API_TOKEN"
+env_file = ".env"
+
+[backup]
+output_dir = "backups"
+include_archived = true
+# По умолчанию связанные карточки других досок сохраняются как ссылки/ID.
+# true: выгружать также родителей, детей и блокирующие карточки рекурсивно.
+follow_related = false
+max_related_cards = 10000
+# Внешние картинки из текста скачиваются без токена только с разрешённых хостов.
+# Добавьте точные имена хостов, если изображения хранятся не в Kaiten.
+extra_asset_hosts = []
+
+[performance]
+requests_per_second = 3.0
+# Дополнительный минимальный интервал. Фактически используется больший из
+# min_interval_seconds и 1 / requests_per_second. Ограничение общее.
+min_interval_seconds = 0.0
+page_size = 100
+timeout_seconds = 60
+retries = 5
+backoff_seconds = 1.0
+max_backoff_seconds = 60.0
