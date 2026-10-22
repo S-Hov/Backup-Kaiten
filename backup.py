@@ -19,6 +19,8 @@ def parser():
     p.add_argument('--plan', action='store_true', help='Проверить конфиг и показать план без сети и токена')
     p.add_argument('--full-cards', action='store_true', help='Карточки, все поддержанные связи, файлы и справочники полей')
     p.add_argument('--all', action='store_true', help='Полные карточки плюс структура доски и справочники')
+    p.add_argument('--exclude', action='append', choices=sorted(ALL), default=[],
+                   help='Исключить функцию из выбранной группы; можно повторить, например --exclude sla')
     for name, e in {**BOARD, **CARD, **LOCAL}.items():
         p.add_argument('--' + name, action='store_true', help=e if isinstance(e, str) else e.description)
     p.add_argument('--card-id', action='append', type=int, help='ID отдельной карточки; можно повторить')
@@ -76,6 +78,7 @@ def main(argv=None):
         selected |= ALL
     if a.full_cards:
         selected |= FULL
+    selected -= set(a.exclude)
     if not selected:
         p.error('Выберите --all, --full-cards или отдельные функции; справка: --help')
     if a.limit_cards is not None and a.limit_cards <= 0:
@@ -84,6 +87,8 @@ def main(argv=None):
         p.error('--card-id должен быть положительным')
     # Files require comments for resolving protected comment attachment UIDs.
     if 'files' in selected:
+        if set(a.exclude) & {'comments', 'fields'}:
+            p.error('--files требует comments и fields; их нельзя исключить при скачивании файлов')
         selected |= {'comments', 'fields'}
     cfg = load_config(a.config, require_token=not a.plan)
     if a.active_only:

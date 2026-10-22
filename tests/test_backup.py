@@ -150,6 +150,23 @@ class BackupTests(unittest.TestCase):
             self.assertNotIn('x', store.state['completed'])
             self.assertFalse((store.root / 'files/x').exists())
 
+    def test_current_card_file_preferred_over_activity_snapshot(self):
+        with tempfile.TemporaryDirectory() as d:
+            store = Store(Path(d) / 'copy', {})
+            client = Client('https://example.kaiten.ru', 'SECRET', dict(PERF, retries=0))
+            issues = []
+            files = FileExporter(client, store, {}, lambda *x: issues.append(x))
+            current = dict(id=42, type=1, name='image.png', size=3,
+                           url='https://files.kaiten.ru/image.png')
+            old = dict(current, url='https://files/image.png')
+            with patch.object(client, 'open', return_value=Response(b'abc', {'Content-Length': '3'})) as get:
+                entries = files.export({'id': 1, 'files': [current]},
+                                       {'activity': [{'snapshot': {'files': [old]}}]}, [])
+            self.assertFalse(issues)
+            self.assertEqual(len(entries), 1)
+            self.assertEqual(entries[0]['status'], 'saved')
+            self.assertEqual(get.call_args.args[0], current['url'])
+
     def test_run_with_archives_and_error_reports_partial(self):
         with tempfile.TemporaryDirectory() as d:
             cfg = {'kaiten': {'board_id': 10, 'origin': 'https://example.kaiten.ru'},
@@ -176,6 +193,15 @@ class BackupTests(unittest.TestCase):
             with patch.object(Client, 'open', side_effect=AssertionError('network')):
                 self.assertEqual(main(['--config', str(cfg), '--all', '--plan']), 0)
             self.assertEqual(load_config(cfg, require_token=False)['kaiten']['board_id'], 7)
+
+    def test_exclude_sla_from_all_plan(self):
+        with tempfile.TemporaryDirectory() as d:
+            cfg = Path(d) / 'config.toml'
+            cfg.write_text('[kaiten]\nboard_url="https://company.kaiten.ru/space/3/boards/7"\n', encoding='utf-8')
+            with patch('sys.stdout', new_callable=io.StringIO) as output:
+                self.assertEqual(main(['--config', str(cfg), '--all', '--exclude', 'sla', '--plan']), 0)
+            self.assertNotIn('"sla"', output.getvalue())
+            self.assertIn('"files"', output.getvalue())
 
 
 if __name__ == '__main__':

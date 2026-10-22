@@ -30,6 +30,8 @@ class Exporter:
         except (BackupError, OSError, ValueError, KeyError, TypeError) as e:
             # Never dump HTTP exception bodies, URLs, or the config with secrets.
             message = str(e) if isinstance(e, BackupError) else f'Ошибка данных/диска ({type(e).__name__})'
+            if message == 'HTTP 402':
+                message = 'HTTP 402: API отклонил доступ к функции; проверьте её доступность на тарифе аккаунта'
             self.issue(key, message)
             return None
 

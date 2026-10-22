@@ -91,12 +91,16 @@ class FileExporter:
                 return self.store.state['completed'][key]
             except (OSError, EOFError, IncompleteRead, BackupError) as e:
                 if attempt == self.client.p['retries']:
-                    raise BackupError('Не удалось полностью скачать файл') from None
+                    reason = str(e) if isinstance(e, BackupError) else type(e).__name__
+                    raise BackupError(f'Не удалось полностью скачать файл: {reason}') from None
                 self.client.retry_delay({}, attempt)
 
     def export(self, card, datasets, fields):
         cid = card['id']
-        documents = dict(datasets, card=card)
+        # Activity may contain stale snapshots of the same file (e.g. legacy
+        # https://files/... URLs). Prefer the authoritative current card before
+        # deduplicating attachments by file ID.
+        documents = dict(card=card, **datasets)
         field_uids = {str(f['id']): f.get('uid') for f in fields or []}
         comments = datasets.get('comments') or []
         comment_uids = {str(c['id']): c.get('uid') for c in comments}
