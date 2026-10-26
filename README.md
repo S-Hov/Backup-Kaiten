@@ -11,8 +11,6 @@ Kaiten → локальная папка.
 
 ## Первоначальная настройка
 
-Откройте PowerShell в `C:\work\backups\doska_kaiten`.
-
 В `config.toml` заполните:
 
 - `kaiten.board_url` — ссылку на ваш Kaiten; по ней определяется домен компании.
