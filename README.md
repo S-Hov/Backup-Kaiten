@@ -130,6 +130,7 @@ $env:BOARD_STORAGE = "archive"
 ```
 
 - [Архитектура и выбор технологий](docs/ARCHITECTURE.md)
+- [Будущие обновления из Kaiten: выбранный API-опрос и альтернативные вебхуки](docs/SYNCHRONIZATION.md)
 - [С чего начать изучение Python в этом проекте](docs/LEARNING.md)
 - [Просмотр карточек и данные вашей копии](VIEWER.md)
 - [Экспорт из Kaiten: конфиг, флаги, продолжение](docs/BACKUP.md)
