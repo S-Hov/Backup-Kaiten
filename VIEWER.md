@@ -4,16 +4,16 @@
 
 ```powershell
 cd C:\work\backups\doska_kaiten
-python viewer.py
+.\.venv\Scripts\python.exe viewer.py
 ```
 
 Откройте [http://127.0.0.1:8765](http://127.0.0.1:8765). Для остановки нажмите
-Ctrl+C в окне PowerShell. Python 3.11+, внешние библиотеки не требуются.
+Ctrl+C в окне PowerShell. Python 3.11+. Сначала установите зависимости по инструкции README.md.
 
 Можно указать другой каталог с копиями или другой порт:
 
 ```powershell
-python viewer.py --backup-root "D:\Копии Kaiten" --port 8766
+.\.venv\Scripts\python.exe viewer.py --backup-root "D:\Копии Kaiten" --port 8766
 ```
 
 `--backup-root` указывает на общий каталог, внутри которого находятся папки
@@ -78,21 +78,21 @@ Kaiten. В этой версии карточки открываются для 
 ## Архитектура для перехода на БД
 
 ```text
-Папка архива → ArchiveRepository → normalize_card → CardViewModel v1
+Папка архива → ArchiveRepository / SqlCardRepository → CardService → normalize_card → CardViewModel v1
                                                         ↓
                                                  <kaiten-card>
 ```
 
-- `kaiten_viewer/repository.py` — адаптер хранения. По номеру открывает папку и
+- `backend/app/infrastructure/archive/repository.py` — адаптер хранения. По номеру открывает папку и
   читает все `*.json` внутри неё. Интерфейс `Repository` описывает операции
   списка копий, поиска, получения карточки и справочников.
-- `kaiten_viewer/model.py` — нормализация в единый объект `schemaVersion: 1`.
+- `backend/app/presentation/card_model.py` — нормализация в единый объект `schemaVersion: 1`.
   Сопоставляет ID со справочниками и ссылки картинок с локальными файлами.
-- `kaiten_viewer/server.py` — HTTP-адаптер и выдача вложений.
-- `kaiten_viewer/web/card-component.js` — компонент `KaitenCard`.
+- `backend/app/api/routes.py` — HTTP-адаптер и выдача вложений.
+- `frontend/card-component.js` — компонент `KaitenCard`.
   Он **не делает запросов** и не знает о папках или базе данных.
-- `kaiten_viewer/web/app.js` — поиск, выбор копии, запросы и навигация.
-- `kaiten_viewer/web/rich-text.js` — безопасное отображение разметки.
+- `frontend/app.js` — поиск, выбор копии, запросы и навигация.
+- `frontend/rich-text.js` — безопасное отображение разметки.
 
 Использование компонента:
 
@@ -120,7 +120,7 @@ source:        копия, число JSON, список сохранённых 
 События компонента: `open-card` с `{id}` для перехода к связанной карточке и
 `download-card` с `{data}` для выгрузки объединённого объекта.
 
-При переходе на БД замените `ArchiveRepository` и обработчик выдачи вложений,
+При переходе на БД выберите `BOARD_STORAGE=database` после импорта архива,
 сохранив HTTP-ответ `CardViewModel v1`. Компонент и большая часть интерфейса
 останутся прежними. Полнотекстовый поиск и редактирование можно добавлять
 отдельно; текущая реализация поиска использует сохранённые списки карточек и ID
@@ -135,7 +135,7 @@ source:        копия, число JSON, список сохранённых 
 открываются отдельно по нажатию. Поддержан Range для больших медиафайлов.
 
 ```powershell
-python -m unittest discover -s tests -v
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
 Тесты проверяют чтение всех JSON, расшифровку справочников, поиск, повреждённые

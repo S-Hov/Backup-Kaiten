@@ -1,15 +1,14 @@
 import json
 import tempfile
-import threading
 import unittest
 from pathlib import Path
-from urllib.request import urlopen, Request
-from urllib.error import HTTPError
 from urllib.parse import urlencode
 
-from kaiten_viewer.repository import ArchiveRepository
-from kaiten_viewer.model import normalize_card
-from kaiten_viewer.server import create_server
+from backend.app.infrastructure.archive.repository import ArchiveRepository
+from backend.app.presentation.card_model import normalize_card
+from backend.app.main import create_app
+from backend.app.core.settings import Settings
+from fastapi.testclient import TestClient
 
 
 class ViewerTests(unittest.TestCase):
@@ -92,28 +91,24 @@ class ViewerTests(unittest.TestCase):
             self.repo.asset_path(self.snapshot, 123, 0)
 
     def test_http_card_assets_range_and_no_secret_route(self):
-        server = create_server(self.repo, 0)
-        thread = threading.Thread(target=server.serve_forever, daemon=True)
-        thread.start()
-        base = f'http://127.0.0.1:{server.server_port}'
-        try:
-            with urlopen(base + '/api/cards/123?' + urlencode({'snapshot': self.snapshot})) as r:
-                self.assertEqual(json.load(r)['card']['title'], 'Тестовый заказ')
-                self.assertIn("connect-src 'self'", r.headers['Content-Security-Policy'])
-            with urlopen(Request(base + f'/assets/{self.snapshot}/123/0', headers={'Range': 'bytes=1-3'})) as r:
-                self.assertEqual(r.status, 206)
-                self.assertEqual(r.read(), b'bcd')
-            for path in ('/.env', '/config.toml', '/api/cards/999?snapshot=' + self.snapshot):
-                with self.assertRaises(HTTPError) as err:
-                    urlopen(base + path)
-                self.assertEqual(err.exception.code, 404)
-            with self.assertRaises(HTTPError) as err:
-                urlopen(Request(base + '/api/snapshots', headers={'Host': 'evil.example'}))
-            self.assertEqual(err.exception.code, 403)
-        finally:
-            server.shutdown()
-            server.server_close()
-            thread.join()
+        settings = Settings(backup_root=self.root)
+        app = create_app(settings=settings, repository=self.repo, attachments=self.repo)
+        with TestClient(app, base_url='http://127.0.0.1') as client:
+            response = client.get('/api/v1/cards/123', params={'snapshot': self.snapshot})
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json()['card']['id'], 123)
+            self.assertIn("connect-src 'self'", response.headers['Content-Security-Policy'])
+            response = client.get(f'/assets/{self.snapshot}/123/0', headers={'Range': 'bytes=1-3'})
+            self.assertEqual(response.status_code, 206)
+            self.assertEqual(response.content, b'bcd')
+            for path in ('/.env', '/config.toml', '/api/v1/cards/999?snapshot=' + self.snapshot):
+                self.assertEqual(client.get(path).status_code, 404)
+            self.assertEqual(client.get('/api/v1/snapshots', headers={'Host': 'evil.example'}).status_code, 400)
+            self.assertEqual(client.get('/api/v1/cards', params={'snapshot': self.snapshot, 'limit': 0}).status_code, 422)
+            self.assertEqual(client.get('/api/v1/openapi.json').status_code, 200)
+            self.assertEqual(client.get('/api/cards/123', params={'snapshot': self.snapshot}).status_code, 200)
+            for path in ('/', '/app.js', '/api.js', '/card-component.js'):
+                self.assertEqual(client.get(path).status_code, 200)
 
 
 if __name__ == '__main__':

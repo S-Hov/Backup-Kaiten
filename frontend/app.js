@@ -1,18 +1,18 @@
 import './card-component.js';
 import {escape as e} from './rich-text.js';
+import {api} from './api.js';
 
 const $=selector=>document.querySelector(selector);
 const snapshots=$('#snapshot'),search=$('#card-search'),list=$('#card-list'),main=$('#main-content');
 let currentSnapshot='',currentId=null,offset=0,total=0,query='',request=0,listRequest=0;
 const number=n=>new Intl.NumberFormat('ru-RU').format(n || 0);
 
-async function json(url){const response=await fetch(url);const body=await response.json();if(!response.ok)throw new Error(body.error || 'Не удалось загрузить данные');return body;}
 const apiQuery=extra=>new URLSearchParams({snapshot:currentSnapshot,...extra});
 function selectCurrent(){list.querySelectorAll('button').forEach(b=>b.classList.toggle('selected',b.dataset.id===String(currentId)));}
 async function loadList(append=false){
   const ticket=++listRequest;
   try{
-    const result=await json('/api/cards?'+apiQuery({q:query,offset:append?offset:0,limit:40}));
+    const result=await api.search(currentSnapshot,query,append?offset:0,40);
     if(ticket!==listRequest)return;
     if(!append){list.innerHTML='';offset=0;}
     total=result.total;offset+=result.items.length;
@@ -30,7 +30,7 @@ async function openCard(id,updateURL=true){
   const ticket=++request;currentId=id;selectCurrent();
   main.innerHTML='<div class="loading-state"><span class="spinner"></span>Читаем карточку…</div>';
   try{
-    const model=await json('/api/cards/'+encodeURIComponent(id)+'?'+apiQuery({}));
+    const model=await api.card(currentSnapshot,id);
     if(ticket!==request)return;
     const component=document.createElement('kaiten-card');component.data=model;main.replaceChildren(component);
     document.title=`#${model.card.id} · ${model.card.title} · Архив`;
@@ -46,7 +46,7 @@ function updateStats(data){$('#archive-stats').innerHTML=`<strong>${number(data.
 }
 async function init(){
   try{
-    const data=await json('/api/snapshots');
+    const data=await api.snapshots();
     if(!data.length)throw new Error('Нет резервных копий для просмотра');
     const params=new URLSearchParams(location.search);
     snapshots.innerHTML=data.map(s=>`<option value="${e(s.id)}">${e(s.id.slice(0,10))} · Доска ${e(s.boardId || '')}</option>`).join('');
