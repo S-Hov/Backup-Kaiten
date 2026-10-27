@@ -1,15 +1,18 @@
-import { useMemo, useState } from "react";
-import type { Json, Person } from "../api/types";
-import { initials } from "./format";
-import { renderRichText } from "./rich-text";
+import { useState } from "react";
+import type { Json } from "@/shared/api";
 
 export function Empty({ children }: { children: React.ReactNode }) {
   return <p className="section-empty">{children}</p>;
 }
-export function Avatar({ user }: { user?: Person }) {
+export function Avatar({ label }: { label: string }) {
   return (
     <span className="avatar" aria-hidden="true">
-      {initials(user)}
+      {label
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((part) => part[0])
+        .join("")
+        .toUpperCase()}
     </span>
   );
 }
@@ -65,32 +68,4 @@ export function Value({ value }: { value: Json | undefined }) {
       </dl>
     );
   return <>{String(value)}</>;
-}
-export function RichText({
-  text,
-  imageMap,
-  type,
-  onPreview,
-}: {
-  text?: string;
-  imageMap: Record<string, string>;
-  type?: number;
-  onPreview: (url: string) => void;
-}) {
-  const html = useMemo(
-    () => renderRichText(text ?? "", imageMap, type),
-    [text, imageMap, type],
-  );
-  if (!text) return <Empty>Описание не заполнено</Empty>;
-  return (
-    <div
-      className="rich-text"
-      onClick={(event) => {
-        const target = event.target;
-        if (target instanceof HTMLImageElement && target.dataset.preview)
-          onPreview(target.dataset.preview);
-      }}
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
-  );
 }

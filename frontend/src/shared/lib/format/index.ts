@@ -1,16 +1,5 @@
-import type { Person } from "../api/types";
-
 export const number = (n: number | null | undefined) =>
   new Intl.NumberFormat("ru-RU").format(n ?? 0);
-export const fullName = (user?: Person) =>
-  user?.full_name || user?.name || user?.username || "Неизвестный участник";
-export const initials = (user?: Person) =>
-  fullName(user)
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((s) => s[0])
-    .join("")
-    .toUpperCase();
 export function formatDate(value?: string | null, time = true): string {
   if (!value) return "Не указано";
   const date = new Date(value);

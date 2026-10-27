@@ -4,6 +4,8 @@ from fastapi import APIRouter, Depends, Query, Request
 from starlette.responses import FileResponse
 from backend.app.application.cards import CardService
 from .schemas import CardPage, CardViewModel, SnapshotSummary
+from .boards import get_boards
+from backend.app.application.boards import BoardService
 
 
 def get_service(request: Request) -> CardService:
@@ -22,9 +24,10 @@ def health():
 
 
 @router.get('/ready', tags=['System'])
-def ready(service: Service):
+def ready(service: Service, boards: Annotated[BoardService, Depends(get_boards)]):
     # Unlike liveness, this touches the configured repository and its schema.
     service.snapshots()
+    boards.list_boards()
     return {'status': 'ready'}
 
 

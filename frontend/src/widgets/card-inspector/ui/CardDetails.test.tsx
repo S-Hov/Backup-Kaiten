@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CardDetails } from "./CardDetails";
-import { cardFixture } from "../../test/fixture";
+import { cardFixture } from "@/test/fixture";
 
 describe("card details", () => {
   it("retains discussion, checklists, unavailable files and unknown JSON fields", async () => {

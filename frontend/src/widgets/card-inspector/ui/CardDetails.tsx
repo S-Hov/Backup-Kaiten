@@ -1,9 +1,11 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
-import type { CardViewModel, Json } from "../../api/types";
-import { Avatar, Disclosure, RichText, Value } from "../../shared/components";
-import { formatDate, fullName } from "../../shared/format";
-import { safeLink } from "../../shared/rich-text";
+import type { CardViewModel, Json } from "@/entities/archive";
+import { Avatar, Disclosure, Value } from "@/shared/ui";
+import { RichText } from "./RichText";
+import { formatDate } from "@/shared/lib/format";
+import { fullName } from "@/entities/archive";
+import { safeLink } from "../lib/rich-text";
 import { Attachments, ImagePreview } from "./Attachments";
 import { Discussion } from "./Discussion";
 
@@ -190,7 +192,7 @@ export function CardDetails({
                         key={`${user.id}:${index}`}
                         title={user.email}
                       >
-                        <Avatar user={user} />
+                        <Avatar label={fullName(user)} />
                         {fullName(user)}
                         {user.type === 2 && (
                           <span

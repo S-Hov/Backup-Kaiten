@@ -1,7 +1,9 @@
 import { useState } from "react";
-import type { CardViewModel } from "../../api/types";
-import { Avatar, Empty, RichText, Value } from "../../shared/components";
-import { formatDate, fullName } from "../../shared/format";
+import type { CardViewModel } from "@/entities/archive";
+import { Avatar, Empty, Value } from "@/shared/ui";
+import { RichText } from "./RichText";
+import { formatDate } from "@/shared/lib/format";
+import { fullName } from "@/entities/archive";
 import { Attachments } from "./Attachments";
 
 const tabs = {
@@ -110,7 +112,7 @@ export function Discussion({
                 .map((comment) => (
                   <article className="comment" key={comment.id}>
                     <div className="comment-heading">
-                      <Avatar user={comment.author} />
+                      <Avatar label={fullName(comment.author)} />
                       <div>
                         <b>{fullName(comment.author)}</b>
                         <time>

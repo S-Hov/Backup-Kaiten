@@ -3,6 +3,11 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      "@": new URL("./src", import.meta.url).pathname.replace(/^\/(\w:)/, "$1"),
+    },
+  },
   // /assets is reserved for archive attachments in the backend.
   build: { assetsDir: "static" },
   server: {

@@ -1,4 +1,4 @@
-import type { CardViewModel } from "../api/types";
+import type { CardViewModel } from "@/entities/archive";
 
 export function cardFixture(id = 123): CardViewModel {
   return {

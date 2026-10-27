@@ -9,6 +9,8 @@ from backend.app.api.routes import router, assets
 from backend.app.application.cards import CardService
 from backend.app.core.settings import Settings
 from backend.app.infrastructure.archive.repository import ArchiveRepository
+from backend.app.api.boards import router as board_router
+from backend.app.application.boards import BoardService
 
 
 SECURITY_POLICY = ("default-src 'self'; script-src 'self'; style-src 'self'; "
@@ -16,7 +18,7 @@ SECURITY_POLICY = ("default-src 'self'; script-src 'self'; style-src 'self'; "
                    "frame-src 'none'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'")
 
 
-def create_app(settings=None, repository=None, attachments=None):
+def create_app(settings=None, repository=None, attachments=None, board_repository=None):
     settings = settings or Settings.from_env()
     archive = ArchiveRepository(settings.backup_root)
     engine = None
@@ -29,6 +31,13 @@ def create_app(settings=None, repository=None, attachments=None):
         else:
             repository = archive
 
+    if board_repository is None:
+        from backend.app.infrastructure.database.connection import make_engine
+        from backend.app.infrastructure.database.board_repository import SqlBoardRepository
+        if engine is None:
+            engine = make_engine(settings.database_url)
+        board_repository = SqlBoardRepository(engine)
+
     @asynccontextmanager
     async def lifespan(app):
         yield
@@ -38,6 +47,7 @@ def create_app(settings=None, repository=None, attachments=None):
     app = FastAPI(title='Kaiten Board API', version='0.2.0', lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url='/api/v1/openapi.json')
     app.state.cards = CardService(repository, attachments or archive)
+    app.state.boards = BoardService(board_repository)
     app.state.settings = settings
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=['127.0.0.1', 'localhost'])
 
@@ -76,9 +86,11 @@ def create_app(settings=None, repository=None, attachments=None):
         return JSONResponse({'error': 'База данных недоступна. Проверьте подключение и миграции.'}, status_code=503)
 
     app.include_router(router, prefix='/api/v1')
+    app.include_router(board_router, prefix='/api/v1')
     app.include_router(router, prefix='/api', include_in_schema=False)
     app.include_router(assets)
     @app.get('/', include_in_schema=False)
+    @app.get('/archive', include_in_schema=False)
     def frontend():
         path = settings.frontend_root / 'index.html'
         if not path.is_file():

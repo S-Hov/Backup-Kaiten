@@ -9,7 +9,7 @@ npm --prefix frontend run build
 .\.venv\Scripts\python.exe viewer.py
 ```
 
-Откройте [http://127.0.0.1:8765](http://127.0.0.1:8765). Для остановки нажмите
+Откройте [http://127.0.0.1:8765/archive](http://127.0.0.1:8765/archive). Для остановки нажмите
 Ctrl+C в окне PowerShell. Python 3.11+. Сначала установите зависимости по инструкции README.md.
 Клиент теперь написан на React + TypeScript + SCSS. Для сборки без Docker нужен
 Node.js 24. В Docker всё собирается автоматически: `docker compose up --build -d`,
@@ -94,7 +94,7 @@ Kaiten. В этой версии карточки открываются для 
 - `backend/app/presentation/card_model.py` — нормализация в единый объект `schemaVersion: 1`.
   Сопоставляет ID со справочниками и ссылки картинок с локальными файлами.
 - `backend/app/api/routes.py` — HTTP-адаптер и выдача вложений.
-- `frontend/src/features/cards/CardDetails.tsx` — React-компонент `CardDetails`.
+- `frontend/src/widgets/card-inspector/ui/CardDetails.tsx` — React-компонент `CardDetails`.
   Он **не делает запросов** и не знает о папках или базе данных.
 - `frontend/src/app/App.tsx` — поиск, выбор копии и навигация.
 - `frontend/src/shared/rich-text.ts` — безопасное отображение разметки.
@@ -102,7 +102,7 @@ Kaiten. В этой версии карточки открываются для 
 Использование компонента:
 
 ```tsx
-import { CardDetails } from './features/cards/CardDetails';
+import { CardDetails } from '@/widgets/card-inspector';
 <CardDetails model={cardViewModel} onOpen={id => openCard(id)} />
 ```
 

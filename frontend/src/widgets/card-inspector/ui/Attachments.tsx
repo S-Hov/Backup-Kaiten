@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
-import type { Attachment } from "../../api/types";
-import { Empty } from "../../shared/components";
-import { fileSize } from "../../shared/format";
-import { safeAssetURL } from "../../shared/rich-text";
+import type { Attachment } from "@/entities/archive";
+import { Empty } from "@/shared/ui";
+import { fileSize } from "@/shared/lib/format";
+import { safeAssetURL } from "../lib/rich-text";
 
 export function Attachments({
   files,

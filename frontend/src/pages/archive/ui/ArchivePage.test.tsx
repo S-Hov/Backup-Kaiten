@@ -2,12 +2,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { App } from "./App";
-import { api } from "../api/client";
-import { cardFixture } from "../test/fixture";
+import { BrowserRouter } from "react-router-dom";
+import { ArchivePage } from "./ArchivePage";
+import { archiveApi as api } from "@/entities/archive";
+import { cardFixture } from "@/test/fixture";
 
-vi.mock("../api/client", () => ({
-  api: { snapshots: vi.fn(), cards: vi.fn(), card: vi.fn() },
+vi.mock("@/entities/archive", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/archive")>()),
+  archiveApi: { snapshots: vi.fn(), cards: vi.fn(), card: vi.fn() },
 }));
 beforeEach(() => {
   history.replaceState({}, "", "/");
@@ -45,7 +47,9 @@ function mount() {
   });
   return render(
     <QueryClientProvider client={client}>
-      <App />
+      <BrowserRouter>
+        <ArchivePage />
+      </BrowserRouter>
     </QueryClientProvider>,
   );
 }

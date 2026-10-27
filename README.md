@@ -14,14 +14,17 @@ docker compose up --build -d
 ```
 
 Откройте [http://127.0.0.1:8766](http://127.0.0.1:8766).
-Compose запускает PostgreSQL, миграции и приложение. Сейчас интерфейс читает полный
-JSON-архив. Сборка React-клиента и применение миграций выполняются автоматически.
-Новый импорт и синхронизация не запускаются. Рабочие таблицы новой доски созданы
-миграцией `0002_board`; пока они пустые, существующий архив сохранён.
+Compose запускает PostgreSQL, миграции и приложение. Главная страница показывает
+структуру рабочей доски из БД: колонки, подколонки и дорожки. Карточки на ней пока
+не загружаются. Прежний просмотрщик доступен по адресу `/archive`.
+Сборка React-клиента и миграции выполняются автоматически; импорт и синхронизация
+при запуске сайта не выполняются. Рабочие таблицы наполняются через `update_database.py`.
 
 Подробности, экспорт из Kaiten и обслуживание — [docs/DOCKER.md](docs/DOCKER.md).
 Рабочая модель БД — [docs/DATABASE_DESIGN.md](docs/DATABASE_DESIGN.md).
 Разработка React-клиента — [docs/FRONTEND.md](docs/FRONTEND.md).
+FSD-архитектура и организация клиентского API — [docs/FRONTEND_ARCHITECTURE.md](docs/FRONTEND_ARCHITECTURE.md).
+Главная страница и API структуры доски — [docs/BOARD.md](docs/BOARD.md).
 Обновление рабочих таблиц из существующих JSON — [docs/UPDATE_DATABASE.md](docs/UPDATE_DATABASE.md).
 
 ## Быстрый запуск без Docker на Windows
@@ -33,6 +36,7 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements-dev.lock
 npm --prefix frontend ci
 npm --prefix frontend run build
+.\.venv\Scripts\python.exe -m backend.app.cli migrate
 .\.venv\Scripts\python.exe viewer.py
 ```
 
@@ -46,7 +50,8 @@ npm --prefix frontend run build
 .\.venv\Scripts\python.exe -m pip install -e ".[dev]"
 ```
 
-API: `/api/v1/snapshots`, `/api/v1/cards`, `/api/v1/cards/{id}`.
+API доски: `/api/v1/boards`, `/api/v1/boards/{uuid}/structure`.
+API архива: `/api/v1/snapshots`, `/api/v1/cards`, `/api/v1/cards/{id}`.
 Проверка сервера: `/api/v1/health`. OpenAPI-спецификация: `/api/v1/openapi.json`.
 Старые `/api/...` пока поддерживаются для совместимости.
 
@@ -67,11 +72,11 @@ backend/
     cli.py                миграции и импорт
   migrations/             версии структуры БД (Alembic)
 frontend/
-  src/api/                типы API и HTTP-клиент
-  src/app/                приложение, поиск и навигация
-  src/features/cards/     компоненты карточки, обсуждения и вложений
-  src/shared/             общие компоненты, форматирование и безопасный текст
-  src/styles/             SCSS
+  src/app/                маршруты, провайдеры и общие стили
+  src/pages/              страницы доски и архива
+  src/widgets/            доска, просмотр карточки
+  src/entities/           API, схемы и модели доски и архива
+  src/shared/             HTTP-клиент, общие компоненты и форматирование
   dist/                   результат сборки Vite (не хранится в Git)
 kaiten_backup/            независимый экспортёр из Kaiten
 kaiten_viewer/            совместимые импорты для прежних путей
@@ -83,8 +88,9 @@ backup.py                 запуск экспортёра
 
 ## Работа через БД
 
-По умолчанию сервер читает `backups/` напрямую, без предварительного импорта.
-Переключение на БД — явное действие. Импорт не меняет исходный архив.
+Главная страница всегда читает рабочие SQL-таблицы. Параметр `BOARD_STORAGE`
+относится к просмотрщику `/archive`: по умолчанию он читает `backups/` напрямую.
+Переключение архива на SQL — явное действие. Импорт не меняет исходный архив.
 
 Первый запуск локально, SQLite:
 
