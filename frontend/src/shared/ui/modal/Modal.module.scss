@@ -1,0 +1,41 @@
+.modal {
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  width: min(1200px, calc(100vw - 48px));
+  max-width: none;
+  height: min(920px, calc(100dvh - 48px));
+  max-height: none;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-dialog);
+  overflow: hidden;
+}
+.modal::backdrop {
+  background: var(--overlay);
+}
+.close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 3;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+  color: var(--text-secondary);
+  font-size: var(--font-size-23);
+}
+.close:hover {
+  background: var(--surface-hover);
+  color: var(--text-strong);
+}
+@media (max-width: 760px) {
+  .modal {
+    width: 100vw;
+    height: 100dvh;
+    border-radius: 0;
+    border: 0;
+    margin: 0;
+  }
+}

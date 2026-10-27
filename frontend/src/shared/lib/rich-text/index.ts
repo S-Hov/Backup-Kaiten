@@ -14,11 +14,14 @@ export function safeLink(url?: string | null): string | null {
 }
 
 export function safeAssetURL(url?: string | null): string | null {
-  if (!url || !url.startsWith("/assets/") || url.includes("\\")) return null;
+  if (!url || !url.startsWith("/") || url.includes("\\")) return null;
   try {
     const parsed = new URL(url, "https://archive.invalid");
     return parsed.origin === "https://archive.invalid" &&
-      parsed.pathname.startsWith("/assets/")
+      (parsed.pathname.startsWith("/assets/") ||
+        /^\/api\/v1\/attachments\/[a-f0-9-]+\/(content|image)$/.test(
+          parsed.pathname,
+        ))
       ? url
       : null;
   } catch {
@@ -72,7 +75,7 @@ export function renderRichText(
     if (!local) {
       const placeholder = doc.createElement("span");
       placeholder.className = "missing-image";
-      placeholder.textContent = "▧ Изображение не сохранено в архиве";
+      placeholder.textContent = "▧ Изображение не сохранено в локальной копии";
       image.replaceWith(placeholder);
     } else {
       image.src = local;

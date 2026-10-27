@@ -87,12 +87,14 @@ frontend/src/
   pages/board/                 главная страница, выбор и обновление доски
   pages/archive/               просмотрщик резервных копий (ленивая загрузка)
   widgets/kanban-board/        колонки, подколонки и дорожки
-  widgets/card-inspector/      карточка, обсуждение, вложения, безопасный текст
+  widgets/card-inspector/      архивная карточка и обсуждение
+  widgets/card-modal/          модальное окно рабочей карточки
   entities/board/              схемы, запросы, ключи кеша и дерево колонок
   entities/card/               превью, порционные запросы и компонент BoardCard
   entities/archive/            схемы и запросы исторических карточек
   shared/api/                  HTTP-клиент, ошибки и отмена запросов
   shared/ui/                   общие компоненты и иконки
+                               modal, files, rich-text — общие компоненты
   shared/lib/format/           даты и размеры
   test/                        вымышленные данные и настройки тестов
 ```

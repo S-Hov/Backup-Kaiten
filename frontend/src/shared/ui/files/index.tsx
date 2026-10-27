@@ -1,8 +1,20 @@
 import { useEffect, useRef } from "react";
-import type { Attachment } from "@/entities/archive";
 import { Empty } from "@/shared/ui";
 import { fileSize } from "@/shared/lib/format";
-import { safeAssetURL } from "../lib/rich-text";
+import { safeAssetURL } from "@/shared/lib/rich-text";
+
+export interface Attachment {
+  commentId?: string | number | null;
+  id: string;
+  name: string;
+  size?: number | null;
+  image: boolean;
+  video?: boolean;
+  audio?: boolean;
+  status: string;
+  url?: string | null;
+  downloadUrl?: string | null;
+}
 
 export function Attachments({
   files,

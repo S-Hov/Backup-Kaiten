@@ -18,7 +18,15 @@ class BoardService:
         return self.repository.cards(board_id, column_id, lane_id, limit, cursor)
 
     def image(self, attachment_id):
-        image = self.repository.image(attachment_id)
+        return self.local_file(self.repository.image(attachment_id))
+
+    def file(self, attachment_id):
+        return self.local_file(self.repository.file(attachment_id))
+
+    def detail(self, card_id):
+        return self.repository.detail(card_id)
+
+    def local_file(self, image):
         if self.backup_root is None:
             raise FileNotFoundError('Хранилище изображений не настроено')
         root = self.backup_root.resolve()

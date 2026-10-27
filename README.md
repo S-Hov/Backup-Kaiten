@@ -36,6 +36,7 @@ Compose запускает PostgreSQL, миграции и приложение.
 Разработка React-клиента — [docs/FRONTEND.md](docs/FRONTEND.md).
 FSD-архитектура и организация клиентского API — [docs/FRONTEND_ARCHITECTURE.md](docs/FRONTEND_ARCHITECTURE.md).
 Главная страница и API структуры доски — [docs/BOARD.md](docs/BOARD.md).
+Модальное окно рабочей карточки — [docs/CARD_DETAILS.md](docs/CARD_DETAILS.md).
 Проект обновлений локальной доски через WebSocket — [docs/REALTIME.md](docs/REALTIME.md).
 Обновление рабочих таблиц из существующих JSON — [docs/UPDATE_DATABASE.md](docs/UPDATE_DATABASE.md).
 

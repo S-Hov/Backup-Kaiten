@@ -33,7 +33,13 @@ function Heading({ node }: { node: ColumnNode }) {
 }
 
 /** Mounted only after board structure has loaded, then each cell loads its first card page. */
-export function KanbanBoard({ structure }: { structure: BoardStructure }) {
+export function KanbanBoard({
+  structure,
+  onOpenCard,
+}: {
+  structure: BoardStructure;
+  onOpenCard?: (id: string) => void;
+}) {
   const tree = useMemo(() => {
     try {
       return { nodes: columnTree(structure.columns), error: null };
@@ -87,6 +93,7 @@ export function KanbanBoard({ structure }: { structure: BoardStructure }) {
               {leaves.map((column) => (
                 <CardCell
                   key={column.id}
+                  onOpen={onOpenCard}
                   boardId={structure.board.id}
                   columnId={column.id}
                   laneId={lane.id === "default" ? null : lane.id}

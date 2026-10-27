@@ -110,3 +110,16 @@ class SqlBoardRepository:
             if row is None:
                 raise FileNotFoundError('Изображение не найдено')
             return {'name': row['name'], 'storageKey': row['storage_key'], 'mime': row['mime_type']}
+
+    def file(self, attachment_id):
+        with Session(self.engine) as session:
+            row = session.execute(select(Attachment.name, FileObject.storage_key, FileObject.mime_type)
+                .join(FileObject, FileObject.id == Attachment.file_object_id).where(Attachment.id == attachment_id,
+                    Attachment.deleted.is_(False), Attachment.is_stub.is_(False), Attachment.status == 'saved')).mappings().first()
+            if row is None:
+                raise FileNotFoundError('Файл не найден')
+            return {'name': row['name'], 'storageKey': row['storage_key'], 'mime': row['mime_type'] or 'application/octet-stream'}
+
+    def detail(self, card_id):
+        from .card_details import read_card_details
+        return read_card_details(self.engine, card_id)

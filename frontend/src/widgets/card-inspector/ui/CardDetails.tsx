@@ -2,11 +2,11 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 import type { CardViewModel, Json } from "@/entities/archive";
 import { Avatar, Disclosure, Value } from "@/shared/ui";
-import { RichText } from "./RichText";
+import { RichText } from "@/shared/ui/rich-text";
 import { formatDate } from "@/shared/lib/format";
 import { fullName } from "@/entities/archive";
-import { safeLink } from "../lib/rich-text";
-import { Attachments, ImagePreview } from "./Attachments";
+import { safeLink } from "@/shared/lib/rich-text";
+import { Attachments, ImagePreview } from "@/shared/ui/files";
 import { Discussion } from "./Discussion";
 
 function Field({ label, children }: { label: string; children: ReactNode }) {

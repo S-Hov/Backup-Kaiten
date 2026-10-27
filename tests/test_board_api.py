@@ -15,6 +15,8 @@ from backend.app.core.settings import Settings
 from backend.app.infrastructure.database.connection import make_engine
 from backend.app.infrastructure.database.board_repository import SqlBoardRepository
 from backend.app.infrastructure.database.board_models import Board, Column, Lane, Card, Tag, CardTag, Attachment, FileObject
+from backend.app.infrastructure.database import board_models as models
+from backend.app.infrastructure.database.models import ArchiveSnapshot, ArchiveCard
 from datetime import datetime, timezone
 import base64
 import json
@@ -184,6 +186,67 @@ class BoardApiTests(unittest.TestCase):
             self.assertNotIn('storageKey', response.text)
         finally:
             event.remove(self.engine, 'before_cursor_execute', capture)
+
+    def test_card_detail_uses_current_rows_and_retained_sql_sections_without_reading_json(self):
+        first, second, lane = self.seed_cards()
+        with Session(self.engine) as session, session.begin():
+            source = models.SourceInstance(id=uuid4(), origin='https://company.kaiten.ru', name='Компания')
+            user = models.User(id=uuid4(), full_name='Анна', email='anna@example.test')
+            session.add_all([source, user]); session.flush()
+            card = session.get(Card, first)
+            card.owner_id = user.id; card.source_instance_id = source.id; card.source_id = 42
+            card.description = '**Текущее описание**'; card.source_data = {'unmapped': 'Не потерять'}
+            session.add(models.CardMember(card_id=first, user_id=user.id, role=2))
+            comment = models.Comment(id=uuid4(), card_id=first, author_id=user.id, text='Актуальный комментарий')
+            checklist = models.Checklist(id=uuid4(), name='Упаковка')
+            session.add_all([comment, checklist]); session.flush()
+            session.add(models.CardChecklist(card_id=first, checklist_id=checklist.id))
+            session.add(models.ChecklistItem(checklist_id=checklist.id, text='Проверить коробку', checked=True))
+            session.add(models.CardRelation(parent_card_id=first, child_card_id=second))
+            self.add_image(session, first, 'detail.png', comment_id=comment.id)
+            session.add(ArchiveSnapshot(id='snapshot', summary={'origin': source.origin}, dictionaries={}))
+            session.flush()
+            session.add(ArchiveCard(snapshot_id='snapshot', card_id=42, title='Старое название', search_text='',
+                raw={'card.json': {'title': 'Старое название'}, 'time-logs.json': [{'minutes': 12}]}, diagnostics=['Файл не скачан']))
+            session.add(ArchiveSnapshot(id='zz-other-company', summary={'origin': 'https://other.kaiten.ru'}, dictionaries={}))
+            session.flush()
+            session.add(ArchiveCard(snapshot_id='zz-other-company', card_id=42, title='Другая компания', search_text='',
+                raw={'time-logs.json': [{'minutes': 999}]}, diagnostics=[]))
+        with patch('backend.app.infrastructure.archive.repository.ArchiveRepository.load_card', side_effect=AssertionError('No disk reads')):
+            response = self.client.get(f'/api/v1/cards/{first}/detail')
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data['card']['title'], 'Первый заказ')
+        self.assertEqual(data['card']['description'], '**Текущее описание**')
+        self.assertEqual(data['members'][0]['name'], 'Анна')
+        self.assertEqual(data['comments'][0]['text'], 'Актуальный комментарий')
+        self.assertTrue(data['checklists'][0]['items'][0]['checked'])
+        self.assertEqual(data['children'][0]['id'], str(second))
+        self.assertEqual(data['extras']['time-logs.json'][0]['minutes'], 12)
+        self.assertEqual(data['source']['diagnostics'], ['Файл не скачан'])
+        self.assertEqual(data['raw']['working-card-source']['unmapped'], 'Не потерять')
+        self.assertEqual(data['files'][0]['commentId'], data['comments'][0]['id'])
+        self.assertNotIn('storageKey', response.text)
+
+    def test_detail_rejects_unknown_stub_deleted_and_keeps_archived_cards_readable(self):
+        first, _, lane = self.seed_cards()
+        self.assertEqual(self.client.get(f'/api/v1/cards/{uuid4()}/detail').status_code, 404)
+        with Session(self.engine) as session:
+            for title in ('Архив', 'Заглушка', 'Удалена'):
+                identifier = session.scalar(select(Card.id).where(Card.title == title))
+                response = self.client.get(f'/api/v1/cards/{identifier}/detail')
+                self.assertEqual(response.status_code, 200 if title == 'Архив' else 404)
+        self.assertEqual(self.client.get('/api/v1/cards/not-a-uuid/detail').status_code, 422)
+
+    def test_content_download_keeps_active_formats_as_attachments(self):
+        first, _, _ = self.seed_cards()
+        root = Path(self.temp.name) / 'no-json-archive'; root.mkdir()
+        (root / 'file.html').write_text('<script>test</script>')
+        with Session(self.engine) as session, session.begin():
+            identifier = self.add_image(session, first, 'file.html', mime='text/html')
+        response = self.client.get(f'/api/v1/attachments/{identifier}/content')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.headers['content-disposition'].startswith('attachment'))
 
 
 if __name__ == '__main__':

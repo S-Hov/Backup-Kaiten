@@ -19,6 +19,18 @@ function Cover({ url, name }: { url: string; name: string }) {
   );
 }
 
+export function CardTags({ tags }: { tags: CardPreview["tags"] }) {
+  return tags.length > 0 ? (
+    <ul className={styles.tags} aria-label="Метки">
+      {tags.map((tag) => (
+        <li key={tag.id} data-color={tagColor(tag.color, tag.id)}>
+          {tag.name}
+        </li>
+      ))}
+    </ul>
+  ) : null;
+}
+
 /** Pure presentation: usable on a board, search results or a related-card list. */
 export function BoardCard({
   card,
@@ -37,15 +49,7 @@ export function BoardCard({
         />
       )}
       <div className={styles.body}>
-        {card.tags.length > 0 && (
-          <ul className={styles.tags} aria-label="Метки">
-            {card.tags.map((tag) => (
-              <li key={tag.id} data-color={tagColor(tag.color, tag.id)}>
-                {tag.name}
-              </li>
-            ))}
-          </ul>
-        )}
+        <CardTags tags={card.tags} />
         <h3 className={styles.title}>{card.title || "Без названия"}</h3>
         <div className={styles.footer}>
           {card.number && <span>#{card.number}</span>}
@@ -60,7 +64,11 @@ export function BoardCard({
       aria-label={`Карточка ${card.number || ""} ${card.title}`}
     >
       {onOpen ? (
-        <button className={styles.open} onClick={() => onOpen(card)}>
+        <button
+          className={styles.open}
+          onClick={() => onOpen(card)}
+          aria-label={`Открыть карточку ${card.number || card.title}`}
+        >
           {content}
         </button>
       ) : (

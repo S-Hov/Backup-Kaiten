@@ -1,7 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { renderRichText, safeAssetURL, safeLink } from "./rich-text";
+import { renderRichText, safeAssetURL, safeLink } from "./index";
 
 describe("archived rich text", () => {
+  it("supports working attachment URLs and keeps traversal and active image types blocked", () => {
+    const url =
+      "/api/v1/attachments/11111111-1111-4111-8111-111111111111/content";
+    expect(safeAssetURL(url)).toBe(url);
+    expect(safeAssetURL("/api/v1/attachments/../../.env")).toBeNull();
+    expect(
+      renderRichText("![Макет](https://files.example/file.png)", {
+        "https://files.example/file.png": url,
+      }),
+    ).toContain(url);
+    expect(
+      renderRichText('<img src="data:image/svg+xml;base64,PHN2Zz4=">', {}, 2),
+    ).not.toContain("<img");
+  });
   it("removes active content, inline styles and unsafe links", () => {
     const html = renderRichText(
       '<script>alert(1)</script><style>body{display:none}</style><svg onload="evil()"></svg><p style="color:red" onclick="evil()">Текст <a href="javascript:evil()">ссылка</a></p>',

@@ -1,10 +1,16 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import { boardQueries } from "@/entities/board";
 import { KanbanBoard } from "@/widgets/kanban-board";
 import { Icon } from "@/shared/ui/icon";
 import styles from "./BoardPage.module.scss";
+
+const CardModal = lazy(() =>
+  import("@/widgets/card-modal").then((module) => ({
+    default: module.CardModal,
+  })),
+);
 
 function LoadingBoard() {
   return (
@@ -27,6 +33,17 @@ function LoadingBoard() {
 export function BoardPage() {
   const [params, setParams] = useSearchParams();
   const [collapsed, setCollapsed] = useState(true);
+  const openCardId = params.get("cardId");
+  function openCard(id: string) {
+    const next = new URLSearchParams(params);
+    next.set("cardId", id);
+    setParams(next);
+  }
+  function closeCard() {
+    const next = new URLSearchParams(params);
+    next.delete("cardId");
+    setParams(next, { replace: true });
+  }
   const boards = useQuery(boardQueries.list());
   const selected = params.get("board") || boards.data?.[0]?.id || "";
   const structure = useQuery({
@@ -128,10 +145,21 @@ export function BoardPage() {
           ) : structure.isPending ? (
             <LoadingBoard />
           ) : (
-            structure.data && <KanbanBoard structure={structure.data} />
+            structure.data && (
+              <KanbanBoard structure={structure.data} onOpenCard={openCard} />
+            )
           )}
         </main>
       </div>
+      {openCardId && (
+        <Suspense fallback={null}>
+          <CardModal
+            cardId={openCardId}
+            onClose={closeCard}
+            onOpen={openCard}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

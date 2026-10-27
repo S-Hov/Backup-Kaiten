@@ -1,10 +1,10 @@
 import { useState } from "react";
 import type { CardViewModel } from "@/entities/archive";
 import { Avatar, Empty, Value } from "@/shared/ui";
-import { RichText } from "./RichText";
+import { RichText } from "@/shared/ui/rich-text";
 import { formatDate } from "@/shared/lib/format";
 import { fullName } from "@/entities/archive";
-import { Attachments } from "./Attachments";
+import { Attachments } from "@/shared/ui/files";
 
 const tabs = {
   comments: "Комментарии",

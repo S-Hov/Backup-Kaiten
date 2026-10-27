@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Empty } from "@/shared/ui";
-import { renderRichText } from "../lib/rich-text";
+import { renderRichText } from "@/shared/lib/rich-text";
 
 export function RichText({
   text,

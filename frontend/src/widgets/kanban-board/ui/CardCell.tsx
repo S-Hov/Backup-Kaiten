@@ -7,11 +7,13 @@ export function CardCell({
   columnId,
   laneId,
   label,
+  onOpen,
 }: {
   boardId: string;
   columnId: string;
   laneId: string | null;
   label: string;
+  onOpen?: (id: string) => void;
 }) {
   const cards = useInfiniteQuery(cardQueries.cell(boardId, columnId, laneId));
   const items = cards.data?.pages.flatMap((page) => page.items) ?? [];
@@ -30,7 +32,11 @@ export function CardCell({
       ) : (
         <>
           {unique.map((card) => (
-            <BoardCard key={card.id} card={card} />
+            <BoardCard
+              key={card.id}
+              card={card}
+              onOpen={onOpen ? (card) => onOpen(card.id) : undefined}
+            />
           ))}
           {!unique.length && !cards.error && (
             <p className={styles.cellMessage}>Нет карточек</p>
