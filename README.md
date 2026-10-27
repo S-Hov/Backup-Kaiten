@@ -22,6 +22,7 @@ JSON-архив. Сборка React-клиента и применение ми�
 Подробности, экспорт из Kaiten и обслуживание — [docs/DOCKER.md](docs/DOCKER.md).
 Рабочая модель БД — [docs/DATABASE_DESIGN.md](docs/DATABASE_DESIGN.md).
 Разработка React-клиента — [docs/FRONTEND.md](docs/FRONTEND.md).
+Обновление рабочих таблиц из существующих JSON — [docs/UPDATE_DATABASE.md](docs/UPDATE_DATABASE.md).
 
 ## Быстрый запуск без Docker на Windows
 

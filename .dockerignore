@@ -3,6 +3,7 @@
 !requirements-runtime.lock
 !alembic.ini
 !backup.py
+!update_database.py
 !backend/
 !backend/**
 !frontend/

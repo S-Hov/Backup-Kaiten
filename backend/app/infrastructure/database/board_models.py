@@ -78,7 +78,7 @@ class SpaceBoard(Base):
     __tablename__ = 'space_boards'
     space_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('spaces.id'), primary_key=True)
     board_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('boards.id'), primary_key=True)
-    sort_order: Mapped[Decimal] = mapped_column(Numeric(30, 10), default=0)
+    sort_order: Mapped[Decimal] = mapped_column(Numeric(50, 25), default=0)
     placement: Mapped[dict] = mapped_column(Json, default=dict)
 
 
@@ -95,7 +95,7 @@ class Column(Imported, Base):
     board_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('boards.id'))
     parent_column_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
     title: Mapped[str] = mapped_column(Text, default='')
-    sort_order: Mapped[Decimal] = mapped_column(Numeric(30, 10), default=0)
+    sort_order: Mapped[Decimal] = mapped_column(Numeric(50, 25), default=0)
     type: Mapped[int | None] = mapped_column(Integer)
     wip_limit: Mapped[int | None] = mapped_column(Integer)
     wip_limit_type: Mapped[int | None] = mapped_column(Integer)
@@ -111,7 +111,7 @@ class Lane(Imported, Base):
     )
     board_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('boards.id'))
     title: Mapped[str] = mapped_column(Text, default='')
-    sort_order: Mapped[Decimal] = mapped_column(Numeric(30, 10), default=0)
+    sort_order: Mapped[Decimal] = mapped_column(Numeric(50, 25), default=0)
     wip_limit: Mapped[int | None] = mapped_column(Integer)
     default_card_type_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey('card_types.id'))
     settings: Mapped[dict] = mapped_column(Json, default=dict)
@@ -167,7 +167,7 @@ class Card(Imported, Base):
     title: Mapped[str] = mapped_column(Text, default='')
     description: Mapped[str] = mapped_column(Text, default='')
     description_format: Mapped[str] = mapped_column(String(20), default='markdown')
-    sort_order: Mapped[Decimal] = mapped_column(Numeric(30, 10), default=0)
+    sort_order: Mapped[Decimal] = mapped_column(Numeric(50, 25), default=0)
     asap: Mapped[bool] = mapped_column(Boolean, default=False)
     archived: Mapped[bool] = mapped_column(Boolean, default=False)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -238,14 +238,14 @@ class CardChecklist(Base):
     __tablename__ = 'card_checklists'
     card_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('cards.id'), primary_key=True)
     checklist_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('checklists.id'), primary_key=True, index=True)
-    sort_order: Mapped[Decimal] = mapped_column(Numeric(30, 10), default=0)
+    sort_order: Mapped[Decimal] = mapped_column(Numeric(50, 25), default=0)
 
 
 class ChecklistItem(Imported, Base):
     __tablename__ = 'checklist_items'
     checklist_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('checklists.id'), index=True)
     text: Mapped[str] = mapped_column(Text, default='')
-    sort_order: Mapped[Decimal] = mapped_column(Numeric(30, 10), default=0)
+    sort_order: Mapped[Decimal] = mapped_column(Numeric(50, 25), default=0)
     checked: Mapped[bool] = mapped_column(Boolean, default=False)
     checker_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey('users.id'))
     responsible_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey('users.id'))
@@ -293,7 +293,7 @@ class PropertyOption(Imported, Base):
     __tablename__ = 'property_options'
     property_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('custom_properties.id'), index=True)
     label: Mapped[str] = mapped_column(Text, default='')
-    sort_order: Mapped[Decimal] = mapped_column(Numeric(30, 10), default=0)
+    sort_order: Mapped[Decimal] = mapped_column(Numeric(50, 25), default=0)
 
 
 class CardPropertyValue(Base):
@@ -329,7 +329,7 @@ class Attachment(Imported, Base):
     file_object_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey('file_objects.id'), index=True)
     author_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey('users.id'))
     name: Mapped[str] = mapped_column(Text)
-    sort_order: Mapped[Decimal] = mapped_column(Numeric(30, 10), default=0)
+    sort_order: Mapped[Decimal] = mapped_column(Numeric(50, 25), default=0)
     card_cover: Mapped[bool] = mapped_column(Boolean, default=False)
     deleted: Mapped[bool] = mapped_column(Boolean, default=False)
     external: Mapped[bool] = mapped_column(Boolean, default=False)

@@ -20,7 +20,7 @@ RUN pip install --no-cache-dir -r /tmp/requirements-runtime.lock \
 COPY backend /app/backend
 COPY --from=frontend-build /build/dist /app/frontend/dist
 COPY kaiten_backup /app/kaiten_backup
-COPY backup.py alembic.ini /app/
+COPY backup.py update_database.py alembic.ini /app/
 USER board
 EXPOSE 8000
 CMD ["python", "-m", "uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000"]

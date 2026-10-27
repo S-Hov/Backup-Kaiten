@@ -23,12 +23,16 @@ def main():
     imp = sub.add_parser('import-archive', help='Скопировать JSON архива в БД; вложения остаются на диске')
     imp.add_argument('--snapshot', required=True)
     imp.add_argument('--card-id', action='append', type=int)
+    from backend.app.update_database import add_arguments, run
+    add_arguments(sub.add_parser('update-board', help='Обновить рабочие таблицы из существующих JSON'))
     args = parser.parse_args()
     settings = Settings.from_env()
     if args.command == 'migrate':
         migrate(settings.database_url)
         print('Миграции применены.')
         return
+    if args.command == 'update-board':
+        raise SystemExit(run(args))
     if args.card_id and any(cid <= 0 for cid in args.card_id):
         parser.error('--card-id должен быть положительным')
     engine = make_engine(settings.database_url)
