@@ -21,6 +21,13 @@ def health():
     return {'status': 'ok', 'apiVersion': 1}
 
 
+@router.get('/ready', tags=['System'])
+def ready(service: Service):
+    # Unlike liveness, this touches the configured repository and its schema.
+    service.snapshots()
+    return {'status': 'ready'}
+
+
 @router.get('/snapshots', response_model=list[SnapshotSummary], tags=['Archive'])
 def snapshots(service: Service):
     return service.snapshots()

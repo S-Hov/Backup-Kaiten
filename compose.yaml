@@ -1,0 +1,103 @@
+name: kaiten-board
+
+x-application: &application
+  image: kaiten-board:local
+  build: .
+  init: true
+  environment: &app-environment
+    BOARD_STORAGE: ${BOARD_STORAGE:-archive}
+    BOARD_BACKUP_ROOT: /data/backups
+    BOARD_DATABASE_URL: postgresql+psycopg://board@db:5432/board
+    BOARD_DATABASE_PASSWORD_FILE: /run/secrets/postgres_password
+  secrets:
+    - postgres_password
+  volumes:
+    - type: bind
+      source: ./backups
+      target: /data/backups
+      read_only: true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  db:
+    image: postgres:18-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: board
+      POSTGRES_USER: board
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  migrate:
+    <<: *application
+    command: ["python", "-m", "backend.app.cli", "migrate"]
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    <<: *application
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${BOARD_WEB_PORT:-8766}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/ready', timeout=4).read()"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  tools:
+    <<: *application
+    profiles: ["tools"]
+    entrypoint: ["python", "-m", "backend.app.cli"]
+    command: ["--help"]
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  backup:
+    image: kaiten-board:local
+    build: .
+    profiles: ["tools"]
+    init: true
+    entrypoint: ["python", "backup.py"]
+    command: ["--help"]
+    volumes:
+      - ./backups:/app/backups
+      - ./config.toml:/app/config.toml:ro
+      - ./.env:/app/.env:ro
+
+secrets:
+  postgres_password:
+    file: ./.secrets/postgres_password
+
+volumes:
+  postgres_data:

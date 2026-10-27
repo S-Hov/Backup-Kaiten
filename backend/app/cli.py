@@ -1,5 +1,6 @@
 import argparse
 import json
+import sys
 from alembic import command
 from alembic.config import Config
 from backend.app.application.import_archive import import_archive
@@ -33,7 +34,9 @@ def main():
     engine = make_engine(settings.database_url)
     try:
         result = import_archive(ArchiveRepository(settings.backup_root),
-                                SqlCardRepository(engine), args.snapshot, args.card_id)
+                                SqlCardRepository(engine), args.snapshot, args.card_id,
+                                on_progress=lambda n: print(f'Импортировано: {n}', file=sys.stderr, flush=True)
+                                if n % 1000 == 0 else None)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         if result['issues']:
             raise SystemExit(2)

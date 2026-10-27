@@ -1,0 +1,13 @@
+**
+!Dockerfile
+!requirements-runtime.lock
+!alembic.ini
+!backup.py
+!backend/
+!backend/**
+!frontend/
+!frontend/**
+!kaiten_backup/
+!kaiten_backup/**
+**/__pycache__/
+**/*.pyc

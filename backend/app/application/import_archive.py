@@ -1,7 +1,7 @@
 """Explicit, repeatable import. Original files and JSON are never modified."""
 
 
-def import_archive(source, target, snapshot, card_ids=None, batch_size=100):
+def import_archive(source, target, snapshot, card_ids=None, batch_size=100, on_progress=None):
     summary = next((s for s in source.snapshots() if s['id'] == snapshot), None)
     if summary is None:
         raise FileNotFoundError('Исходная копия не найдена')
@@ -22,9 +22,13 @@ def import_archive(source, target, snapshot, card_ids=None, batch_size=100):
             target.save_cards(snapshot, batch)
             saved += len(batch)
             batch.clear()
+            if on_progress:
+                on_progress(saved)
     if batch:
         target.save_cards(snapshot, batch)
         saved += len(batch)
+        if on_progress:
+            on_progress(saved)
     summary['cards'] = target.count(snapshot)
     summary['status'] = 'partial' if issues else 'limited' if card_ids else source_status
     summary['issues'] = summary.get('issues', 0) + len(issues)

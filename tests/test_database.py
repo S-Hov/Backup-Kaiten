@@ -1,6 +1,8 @@
 import json
 import tempfile
 import unittest
+from unittest.mock import patch
+from sqlalchemy.engine import make_url
 from pathlib import Path
 from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
@@ -67,12 +69,31 @@ class DatabaseTests(unittest.TestCase):
         import_archive(self.source, self.repo, self.snapshot)
         app = create_app(Settings(backup_root=self.backups, storage='database', database_url=self.url))
         with TestClient(app, base_url='http://127.0.0.1') as client:
+            self.assertEqual(client.get('/api/v1/ready').status_code, 200)
             response = client.get('/api/v1/cards/123', params={'snapshot': self.snapshot})
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.json()['card']['id'], 123)
             self.assertEqual(response.json()['source']['origin'], 'database')
             self.assertIn('unknown.json', response.json()['raw'])
             self.assertEqual(client.get('/api/v1/cards/999', params={'snapshot': self.snapshot}).status_code, 404)
+
+    def test_readiness_detects_missing_database_schema(self):
+        missing_url = f'sqlite:///{(Path(self.temp.name) / "empty.db").as_posix()}'
+        app = create_app(Settings(backup_root=self.backups, storage='database', database_url=missing_url))
+        with TestClient(app, base_url='http://127.0.0.1') as client:
+            self.assertEqual(client.get('/api/v1/health').status_code, 200)
+            self.assertEqual(client.get('/api/v1/ready').status_code, 503)
+
+    def test_compose_secret_handles_url_special_characters_without_repr_leak(self):
+        secret = Path(self.temp.name) / 'password'
+        password = 'complex:@/%? secret'
+        secret.write_text(password + '\n', encoding='utf-8')
+        with patch.dict('os.environ', {'BOARD_DATABASE_URL': 'postgresql+psycopg://board@db/board',
+                                      'BOARD_DATABASE_PASSWORD_FILE': str(secret)}):
+            settings = Settings.from_env()
+        self.assertEqual(make_url(settings.database_url).password, password)
+        self.assertNotIn(password, repr(settings))
+        self.assertNotIn('postgresql', repr(settings))
 
     def test_missing_card_import_is_reported_without_deleting_source(self):
         result = import_archive(self.source, self.repo, self.snapshot, [123, 999])

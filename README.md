@@ -4,7 +4,29 @@
 клиент — отдельные JavaScript-компоненты, хранение — архив JSON или SQL-база.
 Существующие карточки и вложения открываются через один интерфейс в обоих режимах.
 
-## Быстрый запуск на Windows
+## Запуск через Docker Compose
+
+При запущенном Docker Desktop из корня проекта:
+
+```powershell
+python scripts/setup_docker.py
+docker compose up --build -d
+```
+
+Откройте [http://127.0.0.1:8766](http://127.0.0.1:8766).
+Compose запускает PostgreSQL, миграции и приложение. Сейчас интерфейс читает полный
+JSON-архив. Для проверки существующего архивного SQL-хранилища импортируйте снимок:
+
+```powershell
+docker compose run --rm tools import-archive --snapshot "2026-10-22_08-58-24_447787Z_board_437516"
+$env:BOARD_STORAGE = "database"
+docker compose up -d web
+```
+
+Подробности, экспорт из Kaiten и обслуживание — [docs/DOCKER.md](docs/DOCKER.md).
+Предложение рабочей модели БД — [docs/DATABASE_DESIGN.md](docs/DATABASE_DESIGN.md).
+
+## Быстрый запуск без Docker на Windows
 
 Из папки проекта:
 
@@ -99,8 +121,8 @@ $env:BOARD_STORAGE = "archive"
 .\.venv\Scripts\python.exe -m backend.app.cli migrate
 ```
 
-Живое подключение к PostgreSQL ещё не проверялось; миграции, импорт и чтение
-проверены на SQLite. Пароль подключения не записывайте в Git.
+Миграции, импорт и чтение проверены на PostgreSQL в Docker и на SQLite.
+Пароль подключения не записывайте в Git.
 
 ## Настройки
 
@@ -109,6 +131,8 @@ $env:BOARD_STORAGE = "archive"
 | `BOARD_STORAGE` | `archive` | `archive` или `database` |
 | `BOARD_BACKUP_ROOT` | `backups/` относительно проекта | Копии и оригиналы вложений |
 | `BOARD_DATABASE_URL` | `.local/board.db`, SQLite | Подключение SQLAlchemy |
+| `BOARD_DATABASE_PASSWORD_FILE` | не задана | Файл пароля; используется Compose secret |
+| `BOARD_WEB_PORT` | `8766` в Compose | Порт веб-приложения в Docker |
 | `BOARD_FRONTEND_ROOT` | `frontend/` | Собранные/исходные файлы клиента |
 
 Настройки сервера отделены от `config.toml` и `.env` экспортёра. Сервер не
