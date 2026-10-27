@@ -1,34 +1,12 @@
 <!doctype html>
 <html lang="ru">
-<head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Архив заказов · Kaiten</title><link rel="stylesheet" href="/styles.css">
-</head>
-<body>
-  <header class="app-header">
-    <a class="brand" href="/" aria-label="Архив заказов"><span class="brand-mark">k</span><b>Архив заказов</b><span class="header-divider"></span><span class="brand-sub">Kaiten</span></a>
-    <div class="archive-pill"><span class="dot"></span>Локальная копия</div>
-  </header>
-  <div class="app-layout">
-    <aside class="sidebar">
-      <div class="sidebar-heading">ВАШ АРХИВ</div>
-      <label class="small-label" for="snapshot">Резервная копия</label>
-      <select id="snapshot" aria-label="Резервная копия"></select>
-      <div id="archive-stats" class="archive-stats">Загрузка…</div>
-      <form id="search-form" class="search-form">
-        <label class="small-label" for="card-search">Номер или название карточки</label>
-        <div class="search-box"><span aria-hidden="true">⌕</span><input id="card-search" placeholder="Например, 14796378" autocomplete="off"><button type="submit" aria-label="Найти карточку">↵</button></div>
-      </form>
-      <div class="list-heading"><span id="list-label">КАРТОЧКИ</span><span id="list-count"></span></div>
-      <nav id="card-list" aria-label="Карточки архива"></nav>
-      <button class="load-more" id="more-cards" hidden>Показать ещё</button>
-      <footer class="sidebar-footer"><span class="local-icon">▣</span><div>Данные на вашем компьютере<small>Просмотр сохранённого состояния</small></div></footer>
-    </aside>
-    <main id="main-content" aria-live="polite">
-      <div class="empty-state"><div class="empty-icon">▤</div><h1>Заказы под рукой</h1><p>Найдите карточку по номеру или выберите её в списке слева.<br>Описание, файлы и вся история собраны в одном месте.</p></div>
-    </main>
-  </div>
-  <div id="toast" role="status" hidden></div>
-  <script type="module" src="/app.js"></script>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Архив заказов · Kaiten</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

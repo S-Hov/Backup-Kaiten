@@ -1,7 +1,7 @@
 # Kaiten Board
 
 Архив заказов Kaiten и основа будущей веб-доски. Сервер — Python/FastAPI,
-клиент — отдельные JavaScript-компоненты, хранение — архив JSON или SQL-база.
+клиент — React + TypeScript + SCSS, сборка Vite; хранение — архив JSON или SQL-база.
 Существующие карточки и вложения открываются через один интерфейс в обоих режимах.
 
 ## Запуск через Docker Compose
@@ -15,16 +15,13 @@ docker compose up --build -d
 
 Откройте [http://127.0.0.1:8766](http://127.0.0.1:8766).
 Compose запускает PostgreSQL, миграции и приложение. Сейчас интерфейс читает полный
-JSON-архив. Для проверки существующего архивного SQL-хранилища импортируйте снимок:
-
-```powershell
-docker compose run --rm tools import-archive --snapshot "2026-10-22_08-58-24_447787Z_board_437516"
-$env:BOARD_STORAGE = "database"
-docker compose up -d web
-```
+JSON-архив. Сборка React-клиента и применение миграций выполняются автоматически.
+Новый импорт и синхронизация не запускаются. Рабочие таблицы новой доски созданы
+миграцией `0002_board`; пока они пустые, существующий архив сохранён.
 
 Подробности, экспорт из Kaiten и обслуживание — [docs/DOCKER.md](docs/DOCKER.md).
-Предложение рабочей модели БД — [docs/DATABASE_DESIGN.md](docs/DATABASE_DESIGN.md).
+Рабочая модель БД — [docs/DATABASE_DESIGN.md](docs/DATABASE_DESIGN.md).
+Разработка React-клиента — [docs/FRONTEND.md](docs/FRONTEND.md).
 
 ## Быстрый запуск без Docker на Windows
 
@@ -33,6 +30,8 @@ docker compose up -d web
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements-dev.lock
+npm --prefix frontend ci
+npm --prefix frontend run build
 .\.venv\Scripts\python.exe viewer.py
 ```
 
@@ -66,7 +65,13 @@ backend/
     main.py               сборка приложения FastAPI
     cli.py                миграции и импорт
   migrations/             версии структуры БД (Alembic)
-frontend/                 клиент; компонент карточки не зависит от хранения
+frontend/
+  src/api/                типы API и HTTP-клиент
+  src/app/                приложение, поиск и навигация
+  src/features/cards/     компоненты карточки, обсуждения и вложений
+  src/shared/             общие компоненты, форматирование и безопасный текст
+  src/styles/             SCSS
+  dist/                   результат сборки Vite (не хранится в Git)
 kaiten_backup/            независимый экспортёр из Kaiten
 kaiten_viewer/            совместимые импорты для прежних путей
 tests/                    проверки экспортёра, API, хранения и миграций
@@ -133,7 +138,7 @@ $env:BOARD_STORAGE = "archive"
 | `BOARD_DATABASE_URL` | `.local/board.db`, SQLite | Подключение SQLAlchemy |
 | `BOARD_DATABASE_PASSWORD_FILE` | не задана | Файл пароля; используется Compose secret |
 | `BOARD_WEB_PORT` | `8766` в Compose | Порт веб-приложения в Docker |
-| `BOARD_FRONTEND_ROOT` | `frontend/` | Собранные/исходные файлы клиента |
+| `BOARD_FRONTEND_ROOT` | `frontend/dist/` | Собранный клиент Vite |
 
 Настройки сервера отделены от `config.toml` и `.env` экспортёра. Сервер не
 использует API-токен Kaiten. Для разработки с автоперезапуском:

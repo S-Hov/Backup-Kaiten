@@ -4,11 +4,16 @@
 
 ```powershell
 cd C:\work\backups\doska_kaiten
+npm --prefix frontend ci
+npm --prefix frontend run build
 .\.venv\Scripts\python.exe viewer.py
 ```
 
 Откройте [http://127.0.0.1:8765](http://127.0.0.1:8765). Для остановки нажмите
 Ctrl+C в окне PowerShell. Python 3.11+. Сначала установите зависимости по инструкции README.md.
+Клиент теперь написан на React + TypeScript + SCSS. Для сборки без Docker нужен
+Node.js 24. В Docker всё собирается автоматически: `docker compose up --build -d`,
+приложение — <http://127.0.0.1:8766>. Разработка клиента описана в [FRONTEND.md](docs/FRONTEND.md).
 
 Можно указать другой каталог с копиями или другой порт:
 
@@ -80,7 +85,7 @@ Kaiten. В этой версии карточки открываются для 
 ```text
 Папка архива → ArchiveRepository / SqlCardRepository → CardService → normalize_card → CardViewModel v1
                                                         ↓
-                                                 <kaiten-card>
+                                                 <CardDetails />
 ```
 
 - `backend/app/infrastructure/archive/repository.py` — адаптер хранения. По номеру открывает папку и
@@ -89,18 +94,16 @@ Kaiten. В этой версии карточки открываются для 
 - `backend/app/presentation/card_model.py` — нормализация в единый объект `schemaVersion: 1`.
   Сопоставляет ID со справочниками и ссылки картинок с локальными файлами.
 - `backend/app/api/routes.py` — HTTP-адаптер и выдача вложений.
-- `frontend/card-component.js` — компонент `KaitenCard`.
+- `frontend/src/features/cards/CardDetails.tsx` — React-компонент `CardDetails`.
   Он **не делает запросов** и не знает о папках или базе данных.
-- `frontend/app.js` — поиск, выбор копии, запросы и навигация.
-- `frontend/rich-text.js` — безопасное отображение разметки.
+- `frontend/src/app/App.tsx` — поиск, выбор копии и навигация.
+- `frontend/src/shared/rich-text.ts` — безопасное отображение разметки.
 
 Использование компонента:
 
-```javascript
-import '/card-component.js';
-const element = document.createElement('kaiten-card');
-element.data = cardViewModel; // объект CardViewModel v1
-document.querySelector('main').replaceChildren(element);
+```tsx
+import { CardDetails } from './features/cards/CardDetails';
+<CardDetails model={cardViewModel} onOpen={id => openCard(id)} />
 ```
 
 Основные поля контракта:
@@ -117,8 +120,8 @@ diagnostics:   проблемы чтения и ошибки из отчёта �
 source:        копия, число JSON, список сохранённых разделов
 ```
 
-События компонента: `open-card` с `{id}` для перехода к связанной карточке и
-`download-card` с `{data}` для выгрузки объединённого объекта.
+Компонент вызывает `onOpen(id)` для перехода к связанной карточке.
+Кнопка «Скачать данные» выгружает объединённый объект без запроса к Kaiten.
 
 При переходе на БД выберите `BOARD_STORAGE=database` после импорта архива,
 сохранив HTTP-ответ `CardViewModel v1`. Компонент и большая часть интерфейса
@@ -129,7 +132,7 @@ source:        копия, число JSON, список сохранённых 
 ## Локальная работа и проверки
 
 Сервер слушает только `127.0.0.1`, не читает `.env` и не обращается к Kaiten.
-Статические файлы выдаются по явному списку; вложения — по сохранённому
+Статические файлы выдаются только из результата сборки Vite; вложения — по сохранённому
 манифесту с проверкой пути. HTML описаний очищается от активного содержимого.
 Встроенные картинки загружаются только из архива; внешние обычные ссылки
 открываются отдельно по нажатию. Поддержан Range для больших медиафайлов.

@@ -3,7 +3,7 @@
 Начинайте с одного запроса: «открыть карточку по номеру». Не нужно сначала
 изучать весь язык или все библиотеки.
 
-1. `frontend/api.js`: знакомый JavaScript отправляет `GET /api/v1/cards/123`.
+1. `frontend/src/api/client.ts`: TypeScript отправляет `GET /api/v1/cards/123`.
 2. `backend/app/api/routes.py`: функция `get_card` принимает номер и копию.
    `def` — объявление функции; аннотации `card_id: int` задают ожидаемый тип.
 3. `backend/app/application/cards.py`: обычный класс вызывает репозиторий и

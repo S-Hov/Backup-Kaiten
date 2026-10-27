@@ -91,7 +91,11 @@ class ViewerTests(unittest.TestCase):
             self.repo.asset_path(self.snapshot, 123, 0)
 
     def test_http_card_assets_range_and_no_secret_route(self):
-        settings = Settings(backup_root=self.root)
+        frontend = self.root / 'frontend-dist'
+        (frontend / 'static').mkdir(parents=True)
+        (frontend / 'index.html').write_text('<div id="root"></div>', encoding='utf-8')
+        (frontend / 'static/app.js').write_text('/* built bundle */', encoding='utf-8')
+        settings = Settings(backup_root=self.root, frontend_root=frontend)
         app = create_app(settings=settings, repository=self.repo, attachments=self.repo)
         with TestClient(app, base_url='http://127.0.0.1') as client:
             response = client.get('/api/v1/cards/123', params={'snapshot': self.snapshot})
@@ -107,8 +111,17 @@ class ViewerTests(unittest.TestCase):
             self.assertEqual(client.get('/api/v1/cards', params={'snapshot': self.snapshot, 'limit': 0}).status_code, 422)
             self.assertEqual(client.get('/api/v1/openapi.json').status_code, 200)
             self.assertEqual(client.get('/api/cards/123', params={'snapshot': self.snapshot}).status_code, 200)
-            for path in ('/', '/app.js', '/api.js', '/card-component.js'):
+            for path in ('/', '/static/app.js'):
                 self.assertEqual(client.get(path).status_code, 200)
+            for path in ('/src/main.tsx', '/package.json', '/app.js', '/api.js', '/card-component.js'):
+                self.assertEqual(client.get(path).status_code, 404)
+
+    def test_missing_frontend_build_has_actionable_error(self):
+        app = create_app(Settings(backup_root=self.root, frontend_root=self.root / 'missing'))
+        with TestClient(app, base_url='http://127.0.0.1') as client:
+            response = client.get('/')
+            self.assertEqual(response.status_code, 503)
+            self.assertIn('npm', response.json()['error'])
 
 
 if __name__ == '__main__':

@@ -1,0 +1,227 @@
+@media (min-width: 1600px) {
+  .card-columns {
+    grid-template-columns: minmax(0, 1fr) 390px;
+  }
+  .field-row {
+    grid-template-columns: 155px minmax(0, 1fr);
+  }
+  main {
+    padding-left: 45px;
+    padding-right: 45px;
+  }
+  .discussion-tabs {
+    gap: 20px;
+    padding: 0 24px;
+  }
+  .discussion-tabs button {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 1150px) {
+  .app-layout {
+    grid-template-columns: 225px minmax(0, 1fr);
+  }
+  .sidebar {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  main {
+    padding: 20px 18px;
+  }
+  .card-columns {
+    grid-template-columns: minmax(0, 1fr) 280px;
+  }
+  .card-header {
+    padding: 24px 24px 0;
+  }
+  .card-main {
+    padding: 22px 24px;
+  }
+  .field-row {
+    grid-template-columns: 94px minmax(0, 1fr);
+    font-size: 11px;
+  }
+  .discussion-tabs {
+    gap: 9px;
+    padding: 0 12px;
+  }
+  .discussion-tabs button {
+    font-size: 9px;
+  }
+  .discussion-content {
+    padding: 20px 15px;
+  }
+  .card-header h1 {
+    font-size: 23px;
+  }
+  .file-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  }
+}
+
+@media (max-width: 950px) {
+  .card-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .card-discussion {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+  .discussion-tabs {
+    gap: 25px;
+    padding: 0 24px;
+  }
+  .discussion-tabs button {
+    font-size: 12px;
+  }
+  .discussion-content {
+    max-height: 600px;
+    padding: 24px;
+  }
+  .comment-text {
+    max-width: 700px;
+  }
+  .discussion-footer {
+    padding-left: 24px;
+  }
+  .field-row {
+    grid-template-columns: 120px minmax(0, 1fr);
+  }
+  .card-main {
+    padding-bottom: 30px;
+  }
+}
+
+@media (max-width: 650px) {
+  .app-header {
+    height: 56px;
+    padding: 0 16px;
+  }
+  .brand b {
+    font-size: 14px;
+  }
+  .brand-sub,
+  .header-divider {
+    display: none;
+  }
+  .archive-pill {
+    font-size: 10px;
+    padding: 6px;
+  }
+  .app-layout {
+    display: block;
+  }
+  .sidebar {
+    height: auto;
+    min-height: 0;
+    position: static;
+    border-right: 0;
+    border-bottom: 1px solid #e6e6eb;
+    padding: 18px 16px;
+  }
+  .sidebar-heading,
+  .sidebar-footer,
+  .list-heading {
+    display: none;
+  }
+  .sidebar .small-label {
+    font-size: 11px;
+  }
+  .sidebar select {
+    font-size: 11px;
+  }
+  .archive-stats {
+    margin-top: 9px;
+  }
+  .search-form {
+    margin: 18px 0 4px;
+  }
+  .sidebar nav {
+    display: flex;
+    gap: 5px;
+    overflow: auto;
+    max-height: 130px;
+    margin-top: 12px;
+  }
+  .list-card {
+    min-width: 180px;
+    max-width: 220px;
+  }
+  .sidebar .load-more {
+    margin: 8px auto;
+    font-size: 10px;
+  }
+  main {
+    padding: 16px 10px;
+  }
+  .detail-breadcrumb {
+    font-size: 9px;
+    margin-bottom: 12px;
+  }
+  .copy-date {
+    display: none;
+  }
+  .card-header {
+    padding: 20px 19px 0;
+  }
+  .card-header h1 {
+    font-size: 22px;
+  }
+  .card-subtitle {
+    font-size: 10px;
+    display: block;
+  }
+  .card-subtitle span {
+    margin: 0 7px;
+  }
+  .card-main {
+    padding: 20px;
+  }
+  .field-row {
+    grid-template-columns: 94px minmax(0, 1fr);
+    gap: 8px;
+    padding: 8px 0;
+  }
+  .member-chip {
+    font-size: 9px;
+  }
+  .column-status {
+    font-size: 9px;
+    max-width: 55%;
+  }
+  .text-button {
+    font-size: 10px;
+  }
+  .card-toolbar {
+    margin-top: 16px;
+  }
+  .file-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .discussion-tabs {
+    padding: 0 18px;
+    gap: 20px;
+  }
+  .discussion-tabs button {
+    font-size: 11px;
+  }
+  .diagnostic {
+    margin: 15px 18px 0;
+    font-size: 10px;
+  }
+  .card-footer {
+    padding: 14px 20px;
+  }
+  .empty-state {
+    min-height: 40vh;
+  }
+  .brand-mark {
+    width: 27px;
+    height: 27px;
+    font-size: 25px;
+  }
+  .all-fields > div {
+    grid-template-columns: 42% minmax(0, 1fr);
+  }
+}

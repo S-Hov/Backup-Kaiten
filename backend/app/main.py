@@ -4,6 +4,7 @@ from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.responses import FileResponse, JSONResponse
+from starlette.staticfiles import StaticFiles
 from backend.app.api.routes import router, assets
 from backend.app.application.cards import CardService
 from backend.app.core.settings import Settings
@@ -77,20 +78,16 @@ def create_app(settings=None, repository=None, attachments=None):
     app.include_router(router, prefix='/api/v1')
     app.include_router(router, prefix='/api', include_in_schema=False)
     app.include_router(assets)
-    names = {'/': 'index.html', '/app.js': 'app.js', '/api.js': 'api.js',
-             '/card-component.js': 'card-component.js', '/rich-text.js': 'rich-text.js',
-             '/styles.css': 'styles.css'}
+    @app.get('/', include_in_schema=False)
+    def frontend():
+        path = settings.frontend_root / 'index.html'
+        if not path.is_file():
+            return JSONResponse({'error': 'Клиент не собран. Выполните npm ci и npm run build в frontend/.'}, status_code=503)
+        return FileResponse(path)
 
-    def static_handler(filename):
-        def response():
-            path = settings.frontend_root / filename
-            if not path.is_file():
-                raise FileNotFoundError('Файл клиентского приложения не найден')
-            return FileResponse(path, media_type='text/javascript' if filename.endswith('.js') else None)
-        return response
-
-    for route, filename in names.items():
-        app.add_api_route(route, static_handler(filename), include_in_schema=False)
+    # Serve only the Vite output directory. Source files, config and archives
+    # are deliberately outside this mount; /assets remains the attachment API.
+    app.mount('/static', StaticFiles(directory=settings.frontend_root / 'static', check_dir=False), name='frontend-static')
     return app
 
 

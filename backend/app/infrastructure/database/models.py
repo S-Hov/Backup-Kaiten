@@ -1,11 +1,8 @@
 """Immutable archive records. Future editable boards get separate tables."""
 from typing import Any
 from sqlalchemy import BigInteger, Boolean, ForeignKey, JSON, String, Text
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-
-
-class Base(DeclarativeBase):
-    pass
+from sqlalchemy.orm import Mapped, mapped_column
+from .base import Base
 
 
 class ArchiveSnapshot(Base):
@@ -26,3 +23,8 @@ class ArchiveCard(Base):
     search_text: Mapped[str] = mapped_column(Text)
     raw: Mapped[dict[str, Any]] = mapped_column(JSON)
     diagnostics: Mapped[list[str]] = mapped_column(JSON)
+
+
+# Register the working model in the same Alembic metadata without changing the
+# archive tables or making any queries/imports when the module is imported.
+from . import board_models  # noqa: E402, F401

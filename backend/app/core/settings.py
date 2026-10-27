@@ -10,7 +10,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 @dataclass(frozen=True)
 class Settings:
     backup_root: Path = PROJECT_ROOT / 'backups'
-    frontend_root: Path = PROJECT_ROOT / 'frontend'
+    frontend_root: Path = PROJECT_ROOT / 'frontend' / 'dist'
     storage: str = 'archive'
     database_url: str = field(default=f'sqlite:///{(PROJECT_ROOT / ".local/board.db").as_posix()}', repr=False)
 
