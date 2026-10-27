@@ -1,0 +1,75 @@
+.card {
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  color: var(--text);
+}
+.open {
+  display: block;
+  padding: 0;
+  width: 100%;
+  text-align: left;
+}
+.open:hover {
+  background: var(--surface-subtle);
+}
+.cover {
+  display: block;
+  width: 100%;
+  height: 150px;
+  object-fit: contain;
+  background: var(--surface-muted);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.missingCover {
+  padding: var(--space-20);
+  color: var(--text-muted);
+  font-size: var(--font-size-11);
+}
+.body {
+  padding: var(--space-12);
+}
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin: 0 0 var(--space-8);
+  padding: 0;
+  list-style: none;
+}
+.tags li {
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-6);
+  font-size: var(--font-size-10);
+  font-weight: var(--font-weight-medium);
+  overflow-wrap: anywhere;
+  background: var(--tag-background);
+  color: var(--tag-text);
+}
+@for $i from 1 through 17 {
+  .tags li[data-color="#{$i}"] {
+    --tag-background: var(--tag-color-#{$i}-bg);
+    --tag-text: var(--tag-color-#{$i}-text);
+  }
+}
+.title {
+  margin: 0;
+  font-size: var(--font-size-13);
+  line-height: 1.5;
+  font-weight: var(--font-weight-medium);
+  overflow-wrap: anywhere;
+}
+.footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  margin-top: var(--space-10);
+  font-size: var(--font-size-10);
+  color: var(--text-muted);
+}
+.urgent {
+  margin-left: auto;
+  color: var(--danger);
+}

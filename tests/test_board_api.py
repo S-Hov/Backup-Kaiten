@@ -7,14 +7,17 @@ from unittest.mock import patch
 from decimal import Decimal
 
 from fastapi.testclient import TestClient
-from sqlalchemy import event
+from sqlalchemy import event, select
 from sqlalchemy.orm import Session
 
 from backend.app.cli import migrate
 from backend.app.core.settings import Settings
 from backend.app.infrastructure.database.connection import make_engine
 from backend.app.infrastructure.database.board_repository import SqlBoardRepository
-from backend.app.infrastructure.database.board_models import Board, Column, Lane
+from backend.app.infrastructure.database.board_models import Board, Column, Lane, Card, Tag, CardTag, Attachment, FileObject
+from datetime import datetime, timezone
+import base64
+import json
 from backend.app.main import create_app
 
 
@@ -89,6 +92,98 @@ class BoardApiTests(unittest.TestCase):
         with Session(self.engine) as session, session.begin():
             empty = Board(id=uuid4(), title='Новая'); session.add(empty); empty_id = empty.id
         self.assertEqual(self.client.get(f'/api/v1/boards/{empty_id}/structure').json()['columns'], [])
+
+    def seed_cards(self):
+        with Session(self.engine) as session, session.begin():
+            lane_id = session.scalar(select(Lane.id).where(Lane.board_id == self.board_id, Lane.title == 'Срочные'))
+            first, second = uuid4(), uuid4()
+            first, second = sorted([first, second])
+            session.add_all([
+                Card(id=first, board_id=self.board_id, column_id=self.second, lane_id=lane_id,
+                     title='Первый заказ', display_number=9007199254740993, sort_order=0),
+                Card(id=second, board_id=self.board_id, column_id=self.second, lane_id=lane_id, title='Второй заказ', sort_order=0),
+                Card(board_id=self.board_id, column_id=self.second, lane_id=lane_id, title='Архив', archived=True),
+                Card(board_id=self.board_id, column_id=self.second, lane_id=lane_id, title='Удалена', deleted_at=datetime.now(timezone.utc)),
+                Card(board_id=self.board_id, column_id=self.second, lane_id=lane_id, title='Заглушка', is_stub=True),
+                Card(board_id=self.board_id, column_id=self.parent, lane_id=lane_id, title='Другая колонка'),
+            ])
+            tag = Tag(id=uuid4(), name='Печать', color='16')
+            session.add(tag); session.flush()
+            session.add(CardTag(card_id=first, tag_id=tag.id))
+        return first, second, lane_id
+
+    def card_page(self, lane_id, **params):
+        return self.client.get(f'/api/v1/boards/{self.board_id}/cards', params={
+            'column_id': str(self.second), 'lane_id': str(lane_id), **params})
+
+    def test_card_cursor_pagination_excludes_archived_deleted_stubs_and_other_columns(self):
+        first, second, lane = self.seed_cards()
+        page = self.card_page(lane, limit=1).json()
+        self.assertEqual([item['id'] for item in page['items']], [str(first)])
+        self.assertEqual(page['items'][0]['number'], '9007199254740993')
+        self.assertEqual(page['items'][0]['tags'][0]['color'], '16')
+        next_page = self.card_page(lane, limit=1, cursor=page['nextCursor']).json()
+        self.assertEqual([item['id'] for item in next_page['items']], [str(second)])
+        self.assertIsNone(next_page['nextCursor'])
+
+    def test_cards_validate_scope_and_cursor(self):
+        _, _, lane = self.seed_cards()
+        for cursor in ('!', 'not-json', base64.urlsafe_b64encode(json.dumps(['0', 123]).encode()).decode()):
+            self.assertEqual(self.card_page(lane, cursor=cursor).status_code, 400)
+        self.assertEqual(self.card_page(uuid4()).status_code, 404)
+        self.assertEqual(self.card_page(lane, limit=101).status_code, 422)
+        self.assertEqual(self.client.get(f'/api/v1/boards/{self.other_board}/cards',
+            params={'column_id': str(self.second)}).status_code, 404)
+
+    def add_image(self, session, card_id, key, **kwargs):
+        obj = FileObject(id=uuid4(), storage_key=key, size=4, mime_type=kwargs.pop('mime', 'image/png'))
+        attachment = Attachment(id=uuid4(), card_id=card_id, name='Макет', file_object_id=obj.id, status='saved', **kwargs)
+        session.add(obj); session.flush(); session.add(attachment)
+        return attachment.id
+
+    def test_cover_prefers_explicit_and_falls_back_only_to_usable_card_images(self):
+        first, second, lane = self.seed_cards()
+        with Session(self.engine) as session, session.begin():
+            self.add_image(session, first, 'first.png', sort_order=1)
+            explicit = self.add_image(session, first, 'cover.png', card_cover=True, sort_order=10)
+            self.add_image(session, second, 'deleted.png', card_cover=True, deleted=True)
+            self.add_image(session, second, 'unsafe.svg', card_cover=True, mime='image/svg+xml')
+            fallback = self.add_image(session, second, 'fallback.png')
+        items = self.card_page(lane).json()['items']
+        self.assertEqual(items[0]['cover']['id'], str(explicit))
+        self.assertTrue(items[0]['cover']['explicit'])
+        self.assertEqual(items[1]['cover']['id'], str(fallback))
+        self.assertFalse(items[1]['cover']['explicit'])
+
+    def test_images_use_database_storage_key_and_reject_missing_and_escaping_paths(self):
+        first, _, _ = self.seed_cards()
+        root = Path(self.temp.name) / 'no-json-archive'; root.mkdir()
+        (root / 'cover.png').write_bytes(b'PNG!')
+        with Session(self.engine) as session, session.begin():
+            good = self.add_image(session, first, 'cover.png')
+            escape = self.add_image(session, first, '../board.db')
+            missing = self.add_image(session, first, 'missing.png')
+        response = self.client.get(f'/api/v1/attachments/{good}/image')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, b'PNG!')
+        self.assertEqual(response.headers['content-type'], 'image/png')
+        for identifier in (escape, missing, uuid4()):
+            self.assertEqual(self.client.get(f'/api/v1/attachments/{identifier}/image').status_code, 404)
+
+    def test_card_list_does_not_load_raw_json_or_details_and_batches_related_data(self):
+        _, _, lane = self.seed_cards()
+        statements = []
+        def capture(connection, cursor, statement, parameters, context, many):
+            statements.append(statement.lower())
+        event.listen(self.engine, 'before_cursor_execute', capture)
+        try:
+            response = self.card_page(lane)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(len(statements), 5)
+            self.assertFalse(any('source_data' in sql or 'cards.description' in sql or 'archive_' in sql for sql in statements))
+            self.assertNotIn('storageKey', response.text)
+        finally:
+            event.remove(self.engine, 'before_cursor_execute', capture)
 
 
 if __name__ == '__main__':

@@ -1,11 +1,36 @@
 import { useState } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  QueryCache,
+  QueryClient,
+  QueryClientProvider,
+  MutationCache,
+} from "@tanstack/react-query";
 import { ApiError, ApiContractError } from "@/shared/api";
+import { Notifications, notify } from "@/shared/ui/notifications";
 
 export function QueryProvider({ children }: { children: React.ReactNode }) {
   const [client] = useState(
     () =>
       new QueryClient({
+        queryCache: new QueryCache({
+          onError: (error, query) => {
+            notify.error(
+              typeof query.meta?.errorTitle === "string"
+                ? query.meta.errorTitle
+                : "Не удалось загрузить данные",
+              {
+                id: "query-error",
+                description: error.message,
+              },
+            );
+          },
+        }),
+        mutationCache: new MutationCache({
+          onError: (error) =>
+            notify.error("Не удалось сохранить изменения", {
+              description: error.message,
+            }),
+        }),
         defaultOptions: {
           queries: {
             staleTime: 30_000,
@@ -23,5 +48,10 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
         },
       }),
   );
-  return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  return (
+    <QueryClientProvider client={client}>
+      {children}
+      <Notifications />
+    </QueryClientProvider>
+  );
 }

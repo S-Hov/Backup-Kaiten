@@ -26,8 +26,8 @@ docker compose --profile dev up -d frontend-dev
 на нём появляются после `docker compose build web` и
 `docker compose up -d --no-deps web`.
 Compose запускает PostgreSQL, миграции и приложение. Главная страница показывает
-структуру рабочей доски из БД: колонки, подколонки и дорожки. Карточки на ней пока
-не загружаются. Прежний просмотрщик доступен по адресу `/archive`.
+рабочую доску из БД: колонки, подколонки, дорожки и активные карточки с тегами
+и обложками. Карточки загружаются порциями. Прежний просмотрщик доступен в `/archive`.
 Сборка React-клиента и миграции выполняются автоматически; импорт и синхронизация
 при запуске сайта не выполняются. Рабочие таблицы наполняются через `update_database.py`.
 
@@ -36,6 +36,7 @@ Compose запускает PostgreSQL, миграции и приложение.
 Разработка React-клиента — [docs/FRONTEND.md](docs/FRONTEND.md).
 FSD-архитектура и организация клиентского API — [docs/FRONTEND_ARCHITECTURE.md](docs/FRONTEND_ARCHITECTURE.md).
 Главная страница и API структуры доски — [docs/BOARD.md](docs/BOARD.md).
+Проект обновлений локальной доски через WebSocket — [docs/REALTIME.md](docs/REALTIME.md).
 Обновление рабочих таблиц из существующих JSON — [docs/UPDATE_DATABASE.md](docs/UPDATE_DATABASE.md).
 
 ## Быстрый запуск без Docker на Windows

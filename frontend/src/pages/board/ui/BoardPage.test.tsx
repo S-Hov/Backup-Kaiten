@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
@@ -28,9 +28,27 @@ function mount() {
   );
 }
 describe("working board homepage", () => {
-  it("requests structure and renders real columns and lanes without requesting cards", async () => {
+  it("requests cards only after structure and renders real columns and lanes", async () => {
+    const fetch = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(
+        async () =>
+          new Response(JSON.stringify({ items: [], nextCursor: null })),
+      );
     vi.spyOn(boardApi, "list").mockResolvedValue([summary]);
-    const structure = vi.spyOn(boardApi, "structure").mockResolvedValue({
+    let finishStructure!: (
+      value: Awaited<ReturnType<typeof boardApi.structure>>,
+    ) => void;
+    const structure = vi.spyOn(boardApi, "structure").mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finishStructure = resolve;
+        }),
+    );
+    mount();
+    await waitFor(() => expect(structure).toHaveBeenCalled());
+    expect(fetch).not.toHaveBeenCalled();
+    finishStructure({
       board: summary,
       columns: [
         {
@@ -52,13 +70,16 @@ describe("working board homepage", () => {
       ],
       lanes: [{ id: a, title: "Срочные", sortOrder: "1" }],
     });
-    mount();
     expect(
       await screen.findByRole("heading", { name: "ПОДГОТОВКА" }),
     ).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "ПЕЧАТЬ" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Срочные" })).toBeInTheDocument();
     expect(structure).toHaveBeenCalledWith(a, expect.any(AbortSignal));
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+    expect(String(fetch.mock.calls[0][0])).toContain(
+      `/boards/${a}/cards?column_id=${a}&lane_id=${a}`,
+    );
     await userEvent.click(
       screen.getByRole("button", { name: "Развернуть меню" }),
     );

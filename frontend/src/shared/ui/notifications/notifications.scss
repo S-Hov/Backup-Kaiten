@@ -1,0 +1,15 @@
+[data-sonner-toaster] [data-sonner-toast].app-toast {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+  box-shadow: var(--shadow-card);
+  font-family: var(--font-sans);
+}
+[data-sonner-toaster] [data-sonner-toast].app-toast [data-description] {
+  color: var(--text-secondary);
+}
+[data-sonner-toaster] [data-sonner-toast].app-toast [data-close-button] {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+}

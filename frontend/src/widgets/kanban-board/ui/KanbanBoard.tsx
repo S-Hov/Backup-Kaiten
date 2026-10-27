@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { columnTree, leafColumns } from "@/entities/board";
 import type { BoardStructure, ColumnNode } from "@/entities/board";
 import styles from "./KanbanBoard.module.scss";
+import { CardCell } from "./CardCell";
 
 function Heading({ node }: { node: ColumnNode }) {
   return (
@@ -31,7 +32,7 @@ function Heading({ node }: { node: ColumnNode }) {
   );
 }
 
-/** Structure only. Cards are intentionally not requested by this widget yet. */
+/** Mounted only after board structure has loaded, then each cell loads its first card page. */
 export function KanbanBoard({ structure }: { structure: BoardStructure }) {
   const tree = useMemo(() => {
     try {
@@ -84,10 +85,12 @@ export function KanbanBoard({ structure }: { structure: BoardStructure }) {
           >
             <div className={styles.cells}>
               {leaves.map((column) => (
-                <div
-                  className={styles.cell}
+                <CardCell
                   key={column.id}
-                  aria-label={`${column.title} · ${lane.title || "Основная дорожка"}`}
+                  boardId={structure.board.id}
+                  columnId={column.id}
+                  laneId={lane.id === "default" ? null : lane.id}
+                  label={`${column.title} · ${lane.title || "Основная дорожка"}`}
                 />
               ))}
             </div>

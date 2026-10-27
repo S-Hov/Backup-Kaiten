@@ -9,7 +9,7 @@ from backend.app.api.routes import router, assets
 from backend.app.application.cards import CardService
 from backend.app.core.settings import Settings
 from backend.app.infrastructure.archive.repository import ArchiveRepository
-from backend.app.api.boards import router as board_router
+from backend.app.api.boards import router as board_router, images as board_images
 from backend.app.application.boards import BoardService
 
 
@@ -47,7 +47,7 @@ def create_app(settings=None, repository=None, attachments=None, board_repositor
     app = FastAPI(title='Kaiten Board API', version='0.2.0', lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url='/api/v1/openapi.json')
     app.state.cards = CardService(repository, attachments or archive)
-    app.state.boards = BoardService(board_repository)
+    app.state.boards = BoardService(board_repository, settings.backup_root)
     app.state.settings = settings
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=['127.0.0.1', 'localhost'])
 
@@ -87,6 +87,7 @@ def create_app(settings=None, repository=None, attachments=None, board_repositor
 
     app.include_router(router, prefix='/api/v1')
     app.include_router(board_router, prefix='/api/v1')
+    app.include_router(board_images, prefix='/api/v1')
     app.include_router(router, prefix='/api', include_in_schema=False)
     app.include_router(assets)
     @app.get('/', include_in_schema=False)

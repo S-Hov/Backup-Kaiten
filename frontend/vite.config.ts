@@ -1,6 +1,7 @@
 import { defineConfig } from "vitest/config";
 import { loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
+import { externalSonnerStyles } from "./tooling/sonner-styles.ts";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, ".", "BOARD_");
@@ -8,7 +9,7 @@ export default defineConfig(({ mode }) => {
   // FastAPI accepts localhost hosts; Docker's internal service name is routing only.
   const apiProxy = { target: apiTarget, headers: { host: "127.0.0.1" } };
   return {
-    plugins: [react()],
+    plugins: [react(), externalSonnerStyles()],
     resolve: {
       alias: {
         "@": new URL("./src", import.meta.url).pathname.replace(

@@ -9,6 +9,7 @@
     "paths": { "@/*": ["./src/*"] },
     "skipLibCheck": true,
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "types": ["vite/client", "vitest/globals"]
