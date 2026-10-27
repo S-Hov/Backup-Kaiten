@@ -26,7 +26,7 @@ function LoadingBoard() {
 
 export function BoardPage() {
   const [params, setParams] = useSearchParams();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const boards = useQuery(boardQueries.list());
   const selected = params.get("board") || boards.data?.[0]?.id || "";
   const structure = useQuery({
@@ -34,8 +34,6 @@ export function BoardPage() {
     enabled: !!selected && boards.isSuccess,
   });
   const current = boards.data?.find((board) => board.id === selected);
-  const rootColumns =
-    structure.data?.columns.filter((column) => !column.parentId).length ?? 0;
   useEffect(() => {
     document.title = `${current?.title || "Доска"} · Заказы`;
   }, [current?.title]);
@@ -54,7 +52,6 @@ export function BoardPage() {
       <aside className={styles.sidebar} aria-label="Навигация">
         <div className={styles.brandRow}>
           <Link className={styles.brand} to="/" aria-label="Заказы — главная">
-            <span className={styles.brandMark}>k</span>
             <b>Заказы</b>
           </Link>
           <button
@@ -110,46 +107,7 @@ export function BoardPage() {
             <Icon name="chevron" size={12} />
             <span>{current?.title || "Рабочая доска"}</span>
           </div>
-          <div className={styles.headerStatus}>
-            <span />
-            Локальное пространство
-          </div>
         </header>
-        <div className={styles.boardToolbar}>
-          <div className={styles.boardTitle}>
-            <span className={styles.boardIcon}>
-              <Icon name="board" size={23} />
-            </span>
-            <div>
-              <h1>{current?.title || "Доска"}</h1>
-              <span className={styles.boardDescription}>
-                {current?.description || "Рабочий процесс компании"}
-              </span>
-            </div>
-          </div>
-          <button
-            className={styles.refreshButton}
-            onClick={refresh}
-            disabled={boards.isFetching || structure.isFetching}
-            aria-label="Обновить структуру доски"
-          >
-            <Icon name="refresh" size={16} />
-            <span>Обновить</span>
-          </button>
-        </div>
-        <div className={styles.viewBar}>
-          <span className={styles.activeView}>
-            <Icon name="board" size={16} />
-            Доска
-          </span>
-          <span className={styles.columnCount}>
-            {structure.data ? `${rootColumns} колонок` : "Структура доски"}
-          </span>
-          <span className={styles.viewMode}>
-            <Icon name="eye" size={15} />
-            Просмотр
-          </span>
-        </div>
         <main className={styles.workspace} aria-label="Рабочая доска">
           {error ? (
             <div className={styles.message} role="alert">
@@ -173,13 +131,6 @@ export function BoardPage() {
             structure.data && <KanbanBoard structure={structure.data} />
           )}
         </main>
-        <footer className={styles.footer}>
-          <span className={styles.footerDot} />
-          Структура доски
-          <span className={styles.scrollHint}>
-            Прокручивайте вправо, чтобы увидеть все колонки →
-          </span>
-        </footer>
       </div>
     </div>
   );

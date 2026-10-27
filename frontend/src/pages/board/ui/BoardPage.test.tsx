@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
@@ -60,9 +60,11 @@ describe("working board homepage", () => {
     expect(screen.getByRole("region", { name: "Срочные" })).toBeInTheDocument();
     expect(structure).toHaveBeenCalledWith(a, expect.any(AbortSignal));
     await userEvent.click(
-      screen.getByRole("button", { name: "Обновить структуру доски" }),
+      screen.getByRole("button", { name: "Развернуть меню" }),
     );
-    await waitFor(() => expect(structure).toHaveBeenCalledTimes(2));
+    expect(
+      screen.getByRole("button", { name: "Свернуть меню" }),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Архив карточек" }),
     ).toHaveAttribute("href", "/archive");

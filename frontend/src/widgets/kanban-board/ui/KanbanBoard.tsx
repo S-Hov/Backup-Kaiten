@@ -82,10 +82,6 @@ export function KanbanBoard({ structure }: { structure: BoardStructure }) {
             key={lane.id}
             aria-label={lane.title || `Дорожка ${index + 1}`}
           >
-            <div className={styles.laneHeading}>
-              <span className={styles.laneLine} />
-              <span>{lane.title || "Основная дорожка"}</span>
-            </div>
             <div className={styles.cells}>
               {leaves.map((column) => (
                 <div

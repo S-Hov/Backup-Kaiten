@@ -6,15 +6,15 @@
     grid-template-columns: 155px minmax(0, 1fr);
   }
   main {
-    padding-left: 45px;
-    padding-right: 45px;
+    padding-left: var(--space-45);
+    padding-right: var(--space-45);
   }
   .discussion-tabs {
-    gap: 20px;
-    padding: 0 24px;
+    gap: var(--space-20);
+    padding: 0 var(--space-24);
   }
   .discussion-tabs button {
-    font-size: 11px;
+    font-size: var(--font-size-11);
   }
 }
 
@@ -23,37 +23,37 @@
     grid-template-columns: 225px minmax(0, 1fr);
   }
   .sidebar {
-    padding-left: 12px;
-    padding-right: 12px;
+    padding-left: var(--space-12);
+    padding-right: var(--space-12);
   }
   main {
-    padding: 20px 18px;
+    padding: var(--space-20) var(--space-18);
   }
   .card-columns {
     grid-template-columns: minmax(0, 1fr) 280px;
   }
   .card-header {
-    padding: 24px 24px 0;
+    padding: var(--space-24) var(--space-24) 0;
   }
   .card-main {
-    padding: 22px 24px;
+    padding: var(--space-22) var(--space-24);
   }
   .field-row {
     grid-template-columns: 94px minmax(0, 1fr);
-    font-size: 11px;
+    font-size: var(--font-size-11);
   }
   .discussion-tabs {
-    gap: 9px;
-    padding: 0 12px;
+    gap: var(--space-9);
+    padding: 0 var(--space-12);
   }
   .discussion-tabs button {
-    font-size: 9px;
+    font-size: var(--font-size-9);
   }
   .discussion-content {
-    padding: 20px 15px;
+    padding: var(--space-20) var(--space-15);
   }
   .card-header h1 {
-    font-size: 23px;
+    font-size: var(--font-size-23);
   }
   .file-grid {
     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -66,48 +66,48 @@
   }
   .card-discussion {
     border-left: 0;
-    border-top: 1px solid var(--line);
+    border-top: 1px solid var(--border-subtle);
   }
   .discussion-tabs {
-    gap: 25px;
-    padding: 0 24px;
+    gap: var(--space-25);
+    padding: 0 var(--space-24);
   }
   .discussion-tabs button {
-    font-size: 12px;
+    font-size: var(--font-size-12);
   }
   .discussion-content {
     max-height: 600px;
-    padding: 24px;
+    padding: var(--space-24);
   }
   .comment-text {
     max-width: 700px;
   }
   .discussion-footer {
-    padding-left: 24px;
+    padding-left: var(--space-24);
   }
   .field-row {
     grid-template-columns: 120px minmax(0, 1fr);
   }
   .card-main {
-    padding-bottom: 30px;
+    padding-bottom: var(--space-30);
   }
 }
 
 @media (max-width: 650px) {
   .app-header {
     height: 56px;
-    padding: 0 16px;
+    padding: 0 var(--space-16);
   }
   .brand b {
-    font-size: 14px;
+    font-size: var(--font-size-14);
   }
   .brand-sub,
   .header-divider {
     display: none;
   }
   .archive-pill {
-    font-size: 10px;
-    padding: 6px;
+    font-size: var(--font-size-10);
+    padding: var(--space-6);
   }
   .app-layout {
     display: block;
@@ -117,8 +117,8 @@
     min-height: 0;
     position: static;
     border-right: 0;
-    border-bottom: 1px solid #e6e6eb;
-    padding: 18px 16px;
+    border-bottom: 1px solid var(--border);
+    padding: var(--space-18) var(--space-16);
   }
   .sidebar-heading,
   .sidebar-footer,
@@ -126,92 +126,92 @@
     display: none;
   }
   .sidebar .small-label {
-    font-size: 11px;
+    font-size: var(--font-size-11);
   }
   .sidebar select {
-    font-size: 11px;
+    font-size: var(--font-size-11);
   }
   .archive-stats {
-    margin-top: 9px;
+    margin-top: var(--space-9);
   }
   .search-form {
-    margin: 18px 0 4px;
+    margin: var(--space-18) 0 var(--space-4);
   }
   .sidebar nav {
     display: flex;
-    gap: 5px;
+    gap: var(--space-5);
     overflow: auto;
     max-height: 130px;
-    margin-top: 12px;
+    margin-top: var(--space-12);
   }
   .list-card {
     min-width: 180px;
     max-width: 220px;
   }
   .sidebar .load-more {
-    margin: 8px auto;
-    font-size: 10px;
+    margin: var(--space-8) auto;
+    font-size: var(--font-size-10);
   }
   main {
-    padding: 16px 10px;
+    padding: var(--space-16) var(--space-10);
   }
   .detail-breadcrumb {
-    font-size: 9px;
-    margin-bottom: 12px;
+    font-size: var(--font-size-9);
+    margin-bottom: var(--space-12);
   }
   .copy-date {
     display: none;
   }
   .card-header {
-    padding: 20px 19px 0;
+    padding: var(--space-20) var(--space-19) 0;
   }
   .card-header h1 {
-    font-size: 22px;
+    font-size: var(--font-size-22);
   }
   .card-subtitle {
-    font-size: 10px;
+    font-size: var(--font-size-10);
     display: block;
   }
   .card-subtitle span {
-    margin: 0 7px;
+    margin: 0 var(--space-7);
   }
   .card-main {
-    padding: 20px;
+    padding: var(--space-20);
   }
   .field-row {
     grid-template-columns: 94px minmax(0, 1fr);
-    gap: 8px;
-    padding: 8px 0;
+    gap: var(--space-8);
+    padding: var(--space-8) 0;
   }
   .member-chip {
-    font-size: 9px;
+    font-size: var(--font-size-9);
   }
   .column-status {
-    font-size: 9px;
+    font-size: var(--font-size-9);
     max-width: 55%;
   }
   .text-button {
-    font-size: 10px;
+    font-size: var(--font-size-10);
   }
   .card-toolbar {
-    margin-top: 16px;
+    margin-top: var(--space-16);
   }
   .file-grid {
     grid-template-columns: 1fr 1fr;
   }
   .discussion-tabs {
-    padding: 0 18px;
-    gap: 20px;
+    padding: 0 var(--space-18);
+    gap: var(--space-20);
   }
   .discussion-tabs button {
-    font-size: 11px;
+    font-size: var(--font-size-11);
   }
   .diagnostic {
-    margin: 15px 18px 0;
-    font-size: 10px;
+    margin: var(--space-15) var(--space-18) 0;
+    font-size: var(--font-size-10);
   }
   .card-footer {
-    padding: 14px 20px;
+    padding: var(--space-14) var(--space-20);
   }
   .empty-state {
     min-height: 40vh;
@@ -219,7 +219,7 @@
   .brand-mark {
     width: 27px;
     height: 27px;
-    font-size: 25px;
+    font-size: var(--font-size-25);
   }
   .all-fields > div {
     grid-template-columns: 42% minmax(0, 1fr);
