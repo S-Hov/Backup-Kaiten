@@ -6,13 +6,15 @@ export function BoardHeader({
   title,
   search,
   onSearch,
+  resetToken = 0,
 }: {
   title: string;
   search: string;
   onSearch: (search: string) => void;
+  resetToken?: number;
 }) {
   const [draft, setDraft] = useState(search);
-  useEffect(() => setDraft(search), [search]);
+  useEffect(() => setDraft(search), [search, resetToken]);
   useEffect(() => {
     if (draft.trim() === search) return;
     const timeout = window.setTimeout(() => onSearch(draft.trim()), 350);

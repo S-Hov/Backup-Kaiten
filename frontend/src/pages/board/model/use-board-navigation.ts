@@ -20,6 +20,14 @@ export function useBoardNavigation() {
   return {
     ...state,
     update,
+    toggleTag: (tag: { id: string; name: string }) => {
+      const tags = readBoardLocation(latest.current).tags;
+      update({
+        tags: tags.some((item) => item.id === tag.id)
+          ? tags.filter((item) => item.id !== tag.id)
+          : [...tags, tag],
+      });
+    },
     openCard: (card: string) => update({ card }),
     closeCard: () => update({ card: "" }, true),
     selectBoard: (board: string) => update({ board, card: "" }),

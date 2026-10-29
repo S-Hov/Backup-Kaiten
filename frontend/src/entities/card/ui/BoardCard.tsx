@@ -19,12 +19,31 @@ function Cover({ url, name }: { url: string; name: string }) {
   );
 }
 
-export function CardTags({ tags }: { tags: CardPreview["tags"] }) {
+export function CardTags({
+  tags,
+  onSelect,
+  selectedIds = [],
+}: {
+  tags: CardPreview["tags"];
+  onSelect?: (tag: CardPreview["tags"][number]) => void;
+  selectedIds?: string[];
+}) {
   return tags.length > 0 ? (
     <ul className={styles.tags} aria-label="Метки">
       {tags.map((tag) => (
         <li key={tag.id} data-color={tagColor(tag.color, tag.id)}>
-          {tag.name}
+          {onSelect ? (
+            <button
+              className={styles.tagButton}
+              onClick={() => onSelect(tag)}
+              aria-pressed={selectedIds.includes(tag.id)}
+              aria-label={`Фильтровать по метке «${tag.name}»`}
+            >
+              {tag.name}
+            </button>
+          ) : (
+            tag.name
+          )}
         </li>
       ))}
     </ul>
@@ -35,9 +54,13 @@ export function CardTags({ tags }: { tags: CardPreview["tags"] }) {
 export function BoardCard({
   card,
   onOpen,
+  onSelectTag,
+  selectedTagIds,
 }: {
   card: CardPreview;
   onOpen?: (card: CardPreview) => void;
+  onSelectTag?: (tag: CardPreview["tags"][number]) => void;
+  selectedTagIds?: string[];
 }) {
   const content = (
     <>
@@ -49,7 +72,11 @@ export function BoardCard({
         />
       )}
       <div className={styles.body}>
-        <CardTags tags={card.tags} />
+        <CardTags
+          tags={card.tags}
+          onSelect={onSelectTag}
+          selectedIds={selectedTagIds}
+        />
         <h3 className={styles.title}>{card.title || "Без названия"}</h3>
         <div className={styles.footer}>
           {card.number && <span>#{card.number}</span>}
@@ -63,16 +90,13 @@ export function BoardCard({
       className={styles.card}
       aria-label={`Карточка ${card.number || ""} ${card.title}`}
     >
-      {onOpen ? (
+      {content}
+      {onOpen && (
         <button
           className={styles.open}
           onClick={() => onOpen(card)}
           aria-label={`Открыть карточку ${card.number || card.title}`}
-        >
-          {content}
-        </button>
-      ) : (
-        content
+        ></button>
       )}
     </article>
   );

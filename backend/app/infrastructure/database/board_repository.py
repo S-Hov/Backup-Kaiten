@@ -58,7 +58,7 @@ class SqlBoardRepository:
                  'sortOrder': str(row['sort_order']), 'type': row['type'], 'wipLimit': row['wip_limit']} for row in columns],
                 'lanes': [{'id': row['id'], 'title': row['title'], 'sortOrder': str(row['sort_order'])} for row in lanes]}
 
-    def cards(self, board_id, column_id, lane_id, limit=30, cursor=None, archived=False, query=''):
+    def cards(self, board_id, column_id, lane_id, limit=30, cursor=None, archived=False, query='', tag_id=None):
         position = decode_cursor(cursor)
         with Session(self.engine) as session:
             valid_column = select(Column.id).join(Board, Board.id == Column.board_id).where(
@@ -72,6 +72,8 @@ class SqlBoardRepository:
                 Card.sort_order, Card.local_version, Card.asap).where(
                     Card.board_id == board_id, Card.column_id == column_id, Card.lane_id == lane_id,
                     Card.is_stub.is_(False), Card.archived.is_(archived), Card.deleted_at.is_(None))
+            for identifier in set(tag_id or []):
+                statement = statement.where(Card.id.in_(select(CardTag.card_id).where(CardTag.tag_id == identifier)))
             term = query.strip().lower()
             if term:
                 matching_tag = select(CardTag.card_id).join(Tag, Tag.id == CardTag.tag_id).where(

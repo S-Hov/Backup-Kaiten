@@ -5,6 +5,7 @@ import { cardPageSchema } from "./card.schema";
 export interface CardFilters {
   archived?: boolean;
   search?: string;
+  tags?: string[];
 }
 export interface NewCard {
   requestId: string;
@@ -32,6 +33,7 @@ export const cardApi = {
         ...(cursor ? { cursor } : {}),
         ...(filters.archived ? { archived: "true" } : {}),
         ...(filters.search ? { q: filters.search } : {}),
+        ...(filters.tags?.length ? { tag_id: filters.tags } : {}),
       },
     }),
   create: (boardId: string, body: NewCard) =>

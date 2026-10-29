@@ -26,6 +26,7 @@ export const cardQueries = {
         laneId,
         !!filters.archived,
         filters.search || "",
+        [...(filters.tags || [])].sort(),
       ],
       initialPageParam: null as string | null,
       queryFn: ({ signal, pageParam }) =>

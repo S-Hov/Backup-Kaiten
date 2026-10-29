@@ -8,6 +8,10 @@ it("round-trips board view, search, archive and card IDs with encoded query char
     view: "lists" as const,
     archived: true,
     search: "Чай & кофе",
+    tags: [
+      { id: "tag-id", name: "! Срочно !" },
+      { id: "tag-2", name: "Печать" },
+    ],
   };
   const url = routeUrls.board(state);
   expect(

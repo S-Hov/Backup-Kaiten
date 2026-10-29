@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { boardApi } from "@/entities/board";
+import { cardApi } from "@/entities/card";
 import { BoardPage } from "./BoardPage";
 
 const a = "11111111-1111-4111-8111-111111111111";
@@ -28,6 +29,130 @@ function mount() {
   );
 }
 describe("working board homepage", () => {
+  it("filters by a clicked tag, combines filters and clears them together", async () => {
+    vi.spyOn(boardApi, "list").mockResolvedValue([summary]);
+    vi.spyOn(boardApi, "structure").mockResolvedValue({
+      board: summary,
+      columns: [
+        {
+          id: a,
+          title: "Печать",
+          parentId: null,
+          sortOrder: "0",
+          type: 2,
+          wipLimit: null,
+        },
+      ],
+      lanes: [],
+    });
+    const cell = vi.spyOn(cardApi, "cell").mockResolvedValue({
+      items: [
+        {
+          id: a,
+          number: "42",
+          title: "Заказ",
+          columnId: a,
+          laneId: null,
+          sortOrder: "1",
+          version: 1,
+          asap: false,
+          cover: null,
+          tags: [
+            { id: b, name: "Срочно", color: "16" },
+            { id: a, name: "Деколь", color: "1" },
+          ],
+        },
+      ],
+      nextCursor: null,
+    });
+    mount();
+    await userEvent.click(
+      await screen.findByRole("button", {
+        name: "Фильтровать по метке «Срочно»",
+      }),
+    );
+    expect(
+      screen.getByRole("region", { name: "Активные фильтры" }),
+    ).toHaveTextContent("Метка: Срочно");
+    await waitFor(() =>
+      expect(cell).toHaveBeenLastCalledWith(
+        a,
+        a,
+        null,
+        null,
+        expect.objectContaining({ tags: [b] }),
+        expect.any(AbortSignal),
+      ),
+    );
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Фильтровать по метке «Срочно»" }),
+    );
+    expect(
+      screen.queryByRole("region", { name: "Активные фильтры" }),
+    ).not.toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Фильтровать по метке «Срочно»" }),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Фильтровать по метке «Деколь»" }),
+    );
+    await waitFor(() =>
+      expect(cell).toHaveBeenLastCalledWith(
+        a,
+        a,
+        null,
+        null,
+        expect.objectContaining({ tags: [b, a] }),
+        expect.any(AbortSignal),
+      ),
+    );
+    expect(
+      screen.getByRole("region", { name: "Активные фильтры" }),
+    ).toHaveTextContent("Метка: Деколь");
+    expect(
+      screen.getByRole("button", { name: "Фильтровать по метке «Деколь»" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await userEvent.click(
+      screen.getByRole("button", { name: "Убрать фильтр «Метка: Деколь»" }),
+    );
+    expect(
+      screen.getByRole("region", { name: "Активные фильтры" }),
+    ).toHaveTextContent("Метка: Срочно");
+    await userEvent.click(screen.getByRole("button", { name: "Списки" }));
+    await userEvent.click(screen.getByRole("button", { name: "Архив" }));
+    await userEvent.type(screen.getByRole("searchbox"), "Заказ{Enter}");
+    await waitFor(() =>
+      expect(cell).toHaveBeenLastCalledWith(
+        a,
+        a,
+        null,
+        null,
+        { tags: [b], search: "Заказ", archived: true },
+        expect.any(AbortSignal),
+      ),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Убрать фильтр «Метка: Срочно»" }),
+    );
+    expect(
+      screen.getByRole("region", { name: "Активные фильтры" }),
+    ).toHaveTextContent("Поиск: Заказ");
+    expect(screen.queryByText("Метка: Срочно")).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Очистить" }));
+    expect(
+      screen.queryByRole("region", { name: "Активные фильтры" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("searchbox")).toHaveValue("");
+    expect(screen.getByRole("button", { name: "Архив" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+    expect(screen.getByRole("button", { name: "Списки" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
   it("switches views while reusing cards and sends archive/search filters to the API", async () => {
     const fetch = vi
       .spyOn(globalThis, "fetch")
@@ -58,9 +183,7 @@ describe("working board homepage", () => {
       screen.getByRole("region", { name: "Карточки колонки «Печать»" }),
     ).toBeInTheDocument();
     expect(fetch).toHaveBeenCalledTimes(2);
-    await userEvent.click(
-      screen.getByRole("button", { name: "Архив" }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Архив" }));
     await waitFor(() => expect(fetch).toHaveBeenCalledTimes(4));
     expect(String(fetch.mock.calls[3][0])).toContain("archived=true");
     await userEvent.type(

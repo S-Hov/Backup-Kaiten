@@ -8,6 +8,7 @@ import { useBoardNavigation } from "../model/use-board-navigation";
 import { BoardSidebar } from "./BoardSidebar";
 import { BoardHeader } from "./BoardHeader";
 import { BoardToolbar } from "./BoardToolbar";
+import { BoardFilters } from "./BoardFilters";
 import styles from "./BoardPage.module.scss";
 const CardModal = lazy(() =>
   import("@/widgets/card-modal").then((module) => ({
@@ -41,6 +42,7 @@ export function BoardPage() {
   const nav = useBoardNavigation();
   const [collapsed, setCollapsed] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [filterReset, setFilterReset] = useState(0);
   const boards = useQuery(boardQueries.list());
   const selected = nav.board || boards.data?.[0]?.id || "";
   const structure = useQuery({
@@ -78,6 +80,7 @@ export function BoardPage() {
         <BoardHeader
           title={current?.title || "Рабочая доска"}
           search={nav.search}
+          resetToken={filterReset}
           onSearch={(search) => nav.update({ search }, true)}
         />
         <BoardToolbar
@@ -87,6 +90,25 @@ export function BoardPage() {
           onArchive={nav.toggleArchive}
           onAdd={() => setCreating(true)}
           canAdd={canAdd}
+        />
+        <BoardFilters
+          search={nav.search}
+          tags={nav.tags}
+          archived={nav.archived}
+          onRemove={(filter, tagId) => {
+            if (filter === "search") setFilterReset((value) => value + 1);
+            nav.update(
+              filter === "tag"
+                ? { tags: nav.tags.filter((tag) => tag.id !== tagId) }
+                : filter === "search"
+                  ? { search: "" }
+                  : { archived: false },
+            );
+          }}
+          onClear={() => {
+            setFilterReset((value) => value + 1);
+            nav.update({ search: "", tags: [], archived: false });
+          }}
         />
         <main className={styles.workspace} aria-label="Рабочая доска">
           {error ? (
@@ -112,7 +134,12 @@ export function BoardPage() {
               <KanbanBoard
                 structure={structure.data}
                 view={nav.view}
-                filters={{ archived: nav.archived, search: nav.search }}
+                filters={{
+                  archived: nav.archived,
+                  search: nav.search,
+                  tags: nav.tags.map((tag) => tag.id),
+                }}
+                onSelectTag={(tag) => nav.toggleTag(tag)}
                 onOpenCard={nav.openCard}
               />
             )
@@ -135,7 +162,12 @@ export function BoardPage() {
             onClose={() => setCreating(false)}
             onCreated={(card) => {
               setCreating(false);
-              nav.update({ card, search: "", archived: false });
+              nav.update({
+                card,
+                search: "",
+                archived: false,
+                tags: [],
+              });
             }}
           />
         </Suspense>

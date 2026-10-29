@@ -39,11 +39,13 @@ function ListColumn({
   structure,
   filters,
   onOpenCard,
+  onSelectTag,
 }: {
   node: ColumnNode;
   structure: BoardStructure;
   filters: CardFilters;
   onOpenCard?: (id: string) => void;
+  onSelectTag?: (tag: { id: string; name: string }) => void;
 }) {
   if (node.children.length)
     return (
@@ -59,6 +61,7 @@ function ListColumn({
               structure={structure}
               filters={filters}
               onOpenCard={onOpenCard}
+              onSelectTag={onSelectTag}
             />
           ))}
         </div>
@@ -93,6 +96,7 @@ function ListColumn({
               label={`${node.column.title} · ${lane.title || "Основная дорожка"}`}
               filters={filters}
               onOpen={onOpenCard}
+              onSelectTag={onSelectTag}
             />
           </div>
         ))}
@@ -105,11 +109,13 @@ function ListColumn({
 export function KanbanBoard({
   structure,
   onOpenCard,
+  onSelectTag,
   view = "board",
   filters = {},
 }: {
   structure: BoardStructure;
   onOpenCard?: (id: string) => void;
+  onSelectTag?: (tag: { id: string; name: string }) => void;
   view?: BoardView;
   filters?: CardFilters;
 }) {
@@ -159,6 +165,7 @@ export function KanbanBoard({
               structure={structure}
               filters={filters}
               onOpenCard={onOpenCard}
+              onSelectTag={onSelectTag}
             />
           ))}
         </div>
@@ -188,6 +195,7 @@ export function KanbanBoard({
                 <CardCell
                   key={column.id}
                   onOpen={onOpenCard}
+                  onSelectTag={onSelectTag}
                   boardId={structure.board.id}
                   columnId={column.id}
                   laneId={lane.id === "default" ? null : lane.id}

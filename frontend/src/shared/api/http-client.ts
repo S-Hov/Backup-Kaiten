@@ -26,17 +26,19 @@ export async function apiClient<T>(
   path: string,
   schema: z.ZodType<T>,
   options: {
-    query?: Record<string, string | number>;
+    query?: Record<string, string | number | string[]>;
     signal?: AbortSignal;
     method?: "GET" | "POST";
     body?: object;
   } = {},
 ): Promise<T> {
   const query = new URLSearchParams(
-    Object.entries(options.query ?? {}).map(([key, value]) => [
-      key,
-      String(value),
-    ]),
+    Object.entries(options.query ?? {}).flatMap(([key, value]) =>
+      (Array.isArray(value) ? value : [value]).map((item) => [
+        key,
+        String(item),
+      ]),
+    ),
   );
   const response = await fetch(
     `/api/v1${path}${query.size ? `?${query}` : ""}`,

@@ -42,9 +42,6 @@ export function BoardToolbar({
         <Icon name="plus" size={17} />
         Добавить
       </button>
-      {archived && (
-        <span className={styles.archiveHint}>Архивные карточки</span>
-      )}
     </div>
   );
 }

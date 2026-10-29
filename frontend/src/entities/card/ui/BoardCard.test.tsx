@@ -55,3 +55,21 @@ it("delegates opening to the caller and works without tags or a cover", () => {
   expect(onOpen).toHaveBeenCalledWith(expect.objectContaining({ id: card.id }));
   expect(screen.queryByRole("img")).not.toBeInTheDocument();
 });
+
+it("selects a tag without opening the card and keeps buttons separate", () => {
+  const onOpen = vi.fn();
+  const onSelectTag = vi.fn();
+  render(<BoardCard card={card} onOpen={onOpen} onSelectTag={onSelectTag} />);
+  fireEvent.click(
+    screen.getByRole("button", { name: "Фильтровать по метке «Деколь»" }),
+  );
+  expect(onSelectTag).toHaveBeenCalledWith(card.tags[0]);
+  expect(onOpen).not.toHaveBeenCalled();
+  expect(
+    screen
+      .getByRole("button", { name: "Открыть карточку 42" })
+      .querySelector("button"),
+  ).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Открыть карточку 42" }));
+  expect(onOpen).toHaveBeenCalledWith(card);
+});

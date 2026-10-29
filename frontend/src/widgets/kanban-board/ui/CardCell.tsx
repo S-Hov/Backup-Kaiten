@@ -9,6 +9,7 @@ export function CardCell({
   laneId,
   label,
   onOpen,
+  onSelectTag,
   filters = {},
 }: {
   boardId: string;
@@ -16,6 +17,7 @@ export function CardCell({
   laneId: string | null;
   label: string;
   onOpen?: (id: string) => void;
+  onSelectTag?: (tag: { id: string; name: string }) => void;
   filters?: CardFilters;
 }) {
   const cards = useInfiniteQuery(
@@ -40,12 +42,16 @@ export function CardCell({
             <BoardCard
               key={card.id}
               card={card}
+              onSelectTag={onSelectTag}
+              selectedTagIds={filters.tags}
               onOpen={onOpen ? (card) => onOpen(card.id) : undefined}
             />
           ))}
           {!unique.length && !cards.error && (
             <p className={styles.cellMessage}>
-              {filters.search ? "Ничего не найдено" : "Нет карточек"}
+              {filters.search || filters.tags?.length
+                ? "Ничего не найдено"
+                : "Нет карточек"}
             </p>
           )}
           {cards.error && (

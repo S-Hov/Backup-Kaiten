@@ -258,6 +258,30 @@ class BoardApiTests(unittest.TestCase):
             self.assertEqual(self.card_page(lane, q=query).json()['items'], [])
         self.assertEqual(self.card_page(lane, q='x' * 201).status_code, 422)
 
+    def test_exact_tag_filter_combines_with_search_archive_and_pagination(self):
+        first, second, lane = self.seed_cards()
+        with Session(self.engine) as session, session.begin():
+            tag_id = session.scalar(select(Tag.id).where(Tag.name == 'Печать'))
+            session.get(Card, second).title = 'Печать без метки'
+            archived = session.scalar(select(Card.id).where(Card.title == 'Архив'))
+            session.add(CardTag(card_id=archived, tag_id=tag_id))
+        self.assertEqual([item['id'] for item in self.card_page(lane, tag_id=str(tag_id), limit=1).json()['items']], [str(first)])
+        self.assertIsNone(self.card_page(lane, tag_id=str(tag_id), limit=1).json()['nextCursor'])
+        self.assertEqual(self.card_page(lane, tag_id=str(tag_id), q='нет совпадений').json()['items'], [])
+        self.assertEqual([item['id'] for item in self.card_page(lane, tag_id=str(tag_id), archived='true', q='архив').json()['items']], [str(archived)])
+        self.assertEqual(self.card_page(lane, tag_id=str(uuid4())).json()['items'], [])
+        self.assertEqual(self.card_page(lane, tag_id='not-a-uuid').status_code, 422)
+        with Session(self.engine) as session, session.begin():
+            second_tag = Tag(id=uuid4(), name='Вторая', color='1')
+            session.add(second_tag)
+            session.flush()
+            second_tag_id = second_tag.id
+            session.add(CardTag(card_id=second, tag_id=second_tag_id))
+        self.assertEqual(self.card_page(lane, tag_id=[str(tag_id), str(second_tag_id)]).json()['items'], [])
+        with Session(self.engine) as session, session.begin():
+            session.add(CardTag(card_id=first, tag_id=second_tag_id))
+        self.assertEqual([item['id'] for item in self.card_page(lane, tag_id=[str(tag_id), str(second_tag_id)]).json()['items']], [str(first)])
+
     def test_working_archive_is_filtered_separately_from_active_cards(self):
         first, second, lane = self.seed_cards()
         response = self.card_page(lane, archived='true', q='АРХИВ')

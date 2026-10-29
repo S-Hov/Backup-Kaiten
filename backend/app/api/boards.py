@@ -122,8 +122,8 @@ def structure(board_id: UUID, service: Service):
 def cards(board_id: UUID, column_id: UUID, service: Service, lane_id: UUID | None = None,
           limit: Annotated[int, Query(ge=1, le=100)] = 30,
           cursor: Annotated[str | None, Query(max_length=400)] = None,
-          archived: bool = False, q: Annotated[str, Query(max_length=200)] = ''):
-    return service.cards(board_id, column_id, lane_id, limit, cursor, archived, q)
+          archived: bool = False, q: Annotated[str, Query(max_length=200)] = '', tag_id: Annotated[list[UUID] | None, Query()] = None):
+    return service.cards(board_id, column_id, lane_id, limit, cursor, archived, q, tag_id)
 
 
 @router.post('/{board_id}/cards', response_model=CreatedCard, status_code=201)
