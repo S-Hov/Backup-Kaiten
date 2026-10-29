@@ -167,29 +167,6 @@
   display: flex;
   flex-direction: column;
 }
-.header {
-  min-height: 54px;
-  padding: 0 var(--space-28);
-  background: var(--surface);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--border-subtle);
-}
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: var(--space-12);
-  color: var(--text-muted);
-  font-size: var(--font-size-11);
-  min-width: 0;
-}
-.breadcrumb > span:last-child {
-  color: var(--text-secondary);
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
 .workspace {
   display: flex;
   flex-direction: column;
@@ -318,9 +295,6 @@
   }
   .sidebarBottom a {
     justify-content: center;
-  }
-  .header {
-    padding: 0 var(--space-16);
   }
 }
 @media (prefers-reduced-motion: reduce) {

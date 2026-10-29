@@ -248,6 +248,53 @@ class BoardApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.headers['content-disposition'].startswith('attachment'))
 
+    def test_board_search_covers_russian_titles_numbers_tags_and_literal_wildcards(self):
+        first, second, lane = self.seed_cards()
+        for query in ('ПЕРВЫЙ', '#9007199254740993', 'ПЕЧАТЬ'):
+            response = self.card_page(lane, q=query)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual([item['id'] for item in response.json()['items']], [str(first)])
+        for query in ('%', '_', 'нет совпадений'):
+            self.assertEqual(self.card_page(lane, q=query).json()['items'], [])
+        self.assertEqual(self.card_page(lane, q='x' * 201).status_code, 422)
+
+    def test_working_archive_is_filtered_separately_from_active_cards(self):
+        first, second, lane = self.seed_cards()
+        response = self.card_page(lane, archived='true', q='АРХИВ')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([item['title'] for item in response.json()['items']], ['Архив'])
+        self.assertEqual(self.card_page(lane, q='Архив').json()['items'], [])
+
+    def test_local_create_is_persisted_and_repeated_request_does_not_duplicate(self):
+        first, second, lane = self.seed_cards()
+        payload = {'title': '  Новый заказ  ', 'columnId': str(self.second), 'laneId': str(lane), 'requestId': str(uuid4())}
+        url = f'/api/v1/boards/{self.board_id}/cards'
+        response = self.client.post(url, json=payload)
+        self.assertEqual(response.status_code, 201)
+        identifier = response.json()['id']
+        self.assertEqual(self.client.post(url, json=payload).json()['id'], identifier)
+        with Session(self.engine) as session:
+            rows = list(session.scalars(select(Card).where(Card.title == 'Новый заказ')))
+            self.assertEqual(len(rows), 1)
+            self.assertIsNone(rows[0].source_id)
+            self.assertIsNone(rows[0].source_instance_id)
+            self.assertIsNone(rows[0].display_number)
+            self.assertGreater(rows[0].sort_order, 0)
+        self.assertEqual(self.client.get(f'/api/v1/cards/{identifier}/detail').json()['card']['title'], 'Новый заказ')
+        self.assertEqual(self.client.post(url, json=dict(payload, title='Другое название')).status_code, 400)
+
+    def test_create_validates_title_column_lane_and_board_without_partial_writes(self):
+        first, second, lane = self.seed_cards()
+        payload = {'title': 'Новый заказ', 'columnId': str(self.second), 'laneId': str(lane), 'requestId': str(uuid4())}
+        url = f'/api/v1/boards/{self.board_id}/cards'
+        for title in ('   ', 'x' * 501):
+            self.assertEqual(self.client.post(url, json=dict(payload, title=title)).status_code, 422)
+        for patch in ({'columnId': str(self.parent)}, {'columnId': str(uuid4())}, {'laneId': str(uuid4())}, {'laneId': None}):
+            self.assertEqual(self.client.post(url, json=dict(payload, **patch)).status_code, 400)
+        self.assertEqual(self.client.post(f'/api/v1/boards/{self.other_board}/cards', json=payload).status_code, 404)
+        with Session(self.engine) as session:
+            self.assertIsNone(session.scalar(select(Card.id).where(Card.title == 'Новый заказ')))
+
 
 if __name__ == '__main__':
     unittest.main()

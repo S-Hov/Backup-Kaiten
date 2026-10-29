@@ -14,8 +14,11 @@ class BoardService:
     def structure(self, board_id: UUID):
         return self.repository.structure(board_id)
 
-    def cards(self, board_id, column_id, lane_id, limit, cursor):
-        return self.repository.cards(board_id, column_id, lane_id, limit, cursor)
+    def cards(self, board_id, column_id, lane_id, limit, cursor, archived=False, query=''):
+        return self.repository.cards(board_id, column_id, lane_id, limit, cursor, archived, query)
+
+    def create_card(self, board_id, title, column_id, lane_id, request_id):
+        return self.repository.create_card(board_id, title, column_id, lane_id, request_id)
 
     def image(self, attachment_id):
         return self.local_file(self.repository.image(attachment_id))

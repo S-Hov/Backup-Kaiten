@@ -14,6 +14,8 @@ def make_engine(database_url):
     if url.get_backend_name() == 'sqlite':
         @event.listens_for(engine, 'connect')
         def foreign_keys(connection, record):
+            # SQLite's built-in lower() only handles ASCII; match PostgreSQL for Russian search.
+            connection.create_function('lower', 1, lambda value: value.lower() if value is not None else None, deterministic=True)
             cursor = connection.cursor()
             cursor.execute('PRAGMA foreign_keys=ON')
             cursor.close()

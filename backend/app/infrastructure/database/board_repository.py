@@ -2,9 +2,9 @@
 import base64
 import json
 import re
-from decimal import Decimal
-from uuid import UUID
-from sqlalchemy import select, and_, or_, func
+from decimal import Decimal, localcontext
+from uuid import UUID, uuid5
+from sqlalchemy import select, and_, or_, func, cast, String
 from sqlalchemy.orm import Session
 from .board_models import Board, Column, Lane, Card, CardTag, Tag, Attachment, FileObject
 
@@ -58,7 +58,7 @@ class SqlBoardRepository:
                  'sortOrder': str(row['sort_order']), 'type': row['type'], 'wipLimit': row['wip_limit']} for row in columns],
                 'lanes': [{'id': row['id'], 'title': row['title'], 'sortOrder': str(row['sort_order'])} for row in lanes]}
 
-    def cards(self, board_id, column_id, lane_id, limit=30, cursor=None):
+    def cards(self, board_id, column_id, lane_id, limit=30, cursor=None, archived=False, query=''):
         position = decode_cursor(cursor)
         with Session(self.engine) as session:
             valid_column = select(Column.id).join(Board, Board.id == Column.board_id).where(
@@ -71,7 +71,14 @@ class SqlBoardRepository:
             statement = select(Card.id, Card.display_number, Card.title, Card.column_id, Card.lane_id,
                 Card.sort_order, Card.local_version, Card.asap).where(
                     Card.board_id == board_id, Card.column_id == column_id, Card.lane_id == lane_id,
-                    Card.is_stub.is_(False), Card.archived.is_(False), Card.deleted_at.is_(None))
+                    Card.is_stub.is_(False), Card.archived.is_(archived), Card.deleted_at.is_(None))
+            term = query.strip().lower()
+            if term:
+                matching_tag = select(CardTag.card_id).join(Tag, Tag.id == CardTag.tag_id).where(
+                    func.lower(Tag.name).contains(term, autoescape=True))
+                statement = statement.where(or_(func.lower(Card.title).contains(term, autoescape=True),
+                    cast(Card.display_number, String).contains(term.lstrip('#'), autoescape=True) if term.lstrip('#') else False,
+                    Card.id.in_(matching_tag)))
             if position:
                 order, identifier = position
                 statement = statement.where(or_(Card.sort_order > order, and_(Card.sort_order == order, Card.id > identifier)))
@@ -123,3 +130,36 @@ class SqlBoardRepository:
     def detail(self, card_id):
         from .card_details import read_card_details
         return read_card_details(self.engine, card_id)
+
+    def create_card(self, board_id, title, column_id, lane_id, request_id):
+        with Session(self.engine) as session, session.begin():
+            board = session.scalar(select(Board).where(Board.id == board_id, Board.is_stub.is_(False)).with_for_update())
+            if board is None:
+                raise FileNotFoundError('Доска не найдена')
+            identifier = uuid5(board_id, f'local-create:{request_id}')
+            previous = session.get(Card, identifier)
+            if previous is not None:
+                if previous.title != title or previous.column_id != column_id or previous.lane_id != lane_id or previous.deleted_at is not None:
+                    raise ValueError('Этот запрос уже использован для другой карточки')
+                return {'id': previous.id}
+            column = session.scalar(select(Column).where(Column.id == column_id, Column.board_id == board_id, Column.is_stub.is_(False)))
+            if column is None:
+                raise ValueError('Выберите колонку этой доски')
+            if session.scalar(select(Column.id).where(Column.parent_column_id == column_id, Column.is_stub.is_(False)).limit(1)):
+                raise ValueError('Выберите конечную подколонку')
+            if lane_id is not None:
+                if session.scalar(select(Lane.id).where(Lane.id == lane_id, Lane.board_id == board_id, Lane.is_stub.is_(False))) is None:
+                    raise ValueError('Выберите дорожку этой доски')
+            elif session.scalar(select(Lane.id).where(Lane.board_id == board_id, Lane.is_stub.is_(False)).limit(1)):
+                raise ValueError('Выберите дорожку')
+            last = session.scalar(select(func.max(Card.sort_order)).where(Card.board_id == board_id, Card.column_id == column_id,
+                Card.lane_id == lane_id, Card.archived.is_(False), Card.deleted_at.is_(None)))
+            with localcontext() as context:
+                context.prec = 80
+                order = (last if last is not None else Decimal(0)) + 1
+            if abs(order) >= Decimal(10) ** 25:
+                raise ValueError('Нет свободной позиции в колонке')
+            card = Card(id=identifier, board_id=board_id, column_id=column_id, lane_id=lane_id, title=title, sort_order=order,
+                type_id=board.default_card_type_id)
+            session.add(card); session.flush()
+            return {'id': card.id}

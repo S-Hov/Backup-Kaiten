@@ -11,6 +11,21 @@ function respond(body: unknown, status = 200) {
   );
 }
 describe("HTTP boundary", () => {
+  it("sends JSON commands with an explicit content type and validates the response", async () => {
+    respond({ title: "Создана" }, 201);
+    await apiClient("/boards/id/cards", schema, {
+      method: "POST",
+      body: { title: "Новый заказ" },
+    });
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/v1/boards/id/cards",
+      expect.objectContaining({
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: "Новый заказ" }),
+      }),
+    );
+  });
   it("validates the response, keeps extra fields and forwards cancellation", async () => {
     respond({ title: "Доска", future: true });
     const signal = new AbortController().signal;
@@ -44,13 +59,11 @@ describe("HTTP boundary", () => {
     await expect(apiClient("/boards", schema)).rejects.toBe(error);
     vi.stubGlobal(
       "fetch",
-      vi
-        .fn()
-        .mockResolvedValue({
-          ok: true,
-          status: 200,
-          json: vi.fn().mockRejectedValue(error),
-        }),
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: vi.fn().mockRejectedValue(error),
+      }),
     );
     await expect(apiClient("/boards", schema)).rejects.toBe(error);
   });

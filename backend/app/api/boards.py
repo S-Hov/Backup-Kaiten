@@ -2,7 +2,7 @@ from typing import Annotated
 from typing import Any
 from uuid import UUID
 from fastapi import APIRouter, Depends, Request, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, StringConstraints
 from starlette.responses import FileResponse
 from backend.app.application.boards import BoardService
 
@@ -66,6 +66,17 @@ class CardPage(BaseModel):
     nextCursor: str | None
 
 
+class CreateCard(BaseModel):
+    title: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)]
+    columnId: UUID
+    laneId: UUID | None = None
+    requestId: UUID
+
+
+class CreatedCard(BaseModel):
+    id: UUID
+
+
 class CardDetail(BaseModel):
     schemaVersion: int
     card: dict[str, Any]
@@ -110,8 +121,14 @@ def structure(board_id: UUID, service: Service):
 @router.get('/{board_id}/cards', response_model=CardPage)
 def cards(board_id: UUID, column_id: UUID, service: Service, lane_id: UUID | None = None,
           limit: Annotated[int, Query(ge=1, le=100)] = 30,
-          cursor: Annotated[str | None, Query(max_length=400)] = None):
-    return service.cards(board_id, column_id, lane_id, limit, cursor)
+          cursor: Annotated[str | None, Query(max_length=400)] = None,
+          archived: bool = False, q: Annotated[str, Query(max_length=200)] = ''):
+    return service.cards(board_id, column_id, lane_id, limit, cursor, archived, q)
+
+
+@router.post('/{board_id}/cards', response_model=CreatedCard, status_code=201)
+def create_card(board_id: UUID, body: CreateCard, service: Service):
+    return service.create_card(board_id, body.title, body.columnId, body.laneId, body.requestId)
 
 
 @images.get('/attachments/{attachment_id}/image')

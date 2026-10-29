@@ -1,4 +1,8 @@
 const paths = {
+  lists: "M3 4h7v16H3zM14 4h7v16h-7zM5 8h3M16 8h3M5 12h3M16 12h3",
+  search: "M21 21l-5-5M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0",
+  plus: "M12 5v14M5 12h14",
+  close: "M6 6l12 12M18 6 6 18",
   board: "M3 4h18v16H3zM9 4v16M15 4v16",
   archive: "M4 8h16v12H4zM3 4h18v4H3zM9 12h6",
   refresh:

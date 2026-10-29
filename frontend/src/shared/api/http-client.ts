@@ -28,6 +28,8 @@ export async function apiClient<T>(
   options: {
     query?: Record<string, string | number>;
     signal?: AbortSignal;
+    method?: "GET" | "POST";
+    body?: object;
   } = {},
 ): Promise<T> {
   const query = new URLSearchParams(
@@ -38,7 +40,17 @@ export async function apiClient<T>(
   );
   const response = await fetch(
     `/api/v1${path}${query.size ? `?${query}` : ""}`,
-    { signal: options.signal, credentials: "same-origin" },
+    {
+      signal: options.signal,
+      credentials: "same-origin",
+      ...(options.method ? { method: options.method } : {}),
+      ...(options.body
+        ? {
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(options.body),
+          }
+        : {}),
+    },
   );
   let data: unknown;
   try {

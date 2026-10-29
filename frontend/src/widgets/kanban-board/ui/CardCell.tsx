@@ -1,5 +1,6 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { BoardCard, cardQueries } from "@/entities/card";
+import type { CardFilters } from "@/entities/card";
 import styles from "./KanbanBoard.module.scss";
 
 export function CardCell({
@@ -8,14 +9,18 @@ export function CardCell({
   laneId,
   label,
   onOpen,
+  filters = {},
 }: {
   boardId: string;
   columnId: string;
   laneId: string | null;
   label: string;
   onOpen?: (id: string) => void;
+  filters?: CardFilters;
 }) {
-  const cards = useInfiniteQuery(cardQueries.cell(boardId, columnId, laneId));
+  const cards = useInfiniteQuery(
+    cardQueries.cell(boardId, columnId, laneId, filters),
+  );
   const items = cards.data?.pages.flatMap((page) => page.items) ?? [];
   // When a page changes after a future live update, never render a duplicate ID.
   const unique = [...new Map(items.map((card) => [card.id, card])).values()];
@@ -39,7 +44,9 @@ export function CardCell({
             />
           ))}
           {!unique.length && !cards.error && (
-            <p className={styles.cellMessage}>Нет карточек</p>
+            <p className={styles.cellMessage}>
+              {filters.search ? "Ничего не найдено" : "Нет карточек"}
+            </p>
           )}
           {cards.error && (
             <div className={styles.cellError} role="alert">

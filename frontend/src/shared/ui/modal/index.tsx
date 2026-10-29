@@ -6,10 +6,16 @@ export function Modal({
   children,
   labelledBy,
   onClose,
+  closeLabel = "Закрыть карточку",
+  dismissible = true,
+  size = "large",
 }: {
   children: React.ReactNode;
   labelledBy: string;
   onClose: () => void;
+  closeLabel?: string;
+  dismissible?: boolean;
+  size?: "large" | "compact";
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -24,11 +30,16 @@ export function Modal({
     <dialog
       ref={dialog}
       className={styles.modal}
+      data-size={size}
+      onCancel={(event) => {
+        if (!dismissible) event.preventDefault();
+      }}
       aria-labelledby={labelledBy}
       onClose={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
       onClick={(event) => {
+        if (!dismissible) return;
         if (event.target !== event.currentTarget) return;
         const bounds = event.currentTarget.getBoundingClientRect();
         if (
@@ -43,7 +54,8 @@ export function Modal({
       <button
         className={styles.close}
         onClick={() => dialog.current?.close()}
-        aria-label="Закрыть карточку"
+        aria-label={closeLabel}
+        disabled={!dismissible}
         autoFocus
       >
         ×

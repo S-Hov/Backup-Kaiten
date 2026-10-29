@@ -17,7 +17,7 @@ const summary = {
 beforeEach(() => vi.restoreAllMocks());
 function mount() {
   const client = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
+    defaultOptions: { queries: { retry: false, staleTime: 30_000 } },
   });
   return render(
     <MemoryRouter>
@@ -28,6 +28,53 @@ function mount() {
   );
 }
 describe("working board homepage", () => {
+  it("switches views while reusing cards and sends archive/search filters to the API", async () => {
+    const fetch = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(
+        async () =>
+          new Response(JSON.stringify({ items: [], nextCursor: null })),
+      );
+    vi.spyOn(boardApi, "list").mockResolvedValue([summary]);
+    vi.spyOn(boardApi, "structure").mockResolvedValue({
+      board: summary,
+      columns: [a, b].map((id, index) => ({
+        id,
+        title: index ? "Готово" : "Печать",
+        parentId: null,
+        sortOrder: String(index),
+        type: 2,
+        wipLimit: null,
+      })),
+      lanes: [{ id: a, title: "Основная", sortOrder: "0" }],
+    });
+    mount();
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+    await userEvent.click(screen.getByRole("button", { name: "Списки" }));
+    expect(
+      screen.getByRole("region", { name: "Списки доски «Производство»" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Карточки колонки «Печать»" }),
+    ).toBeInTheDocument();
+    expect(fetch).toHaveBeenCalledTimes(2);
+    await userEvent.click(
+      screen.getByRole("button", { name: "Архив" }),
+    );
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(4));
+    expect(String(fetch.mock.calls[3][0])).toContain("archived=true");
+    await userEvent.type(
+      screen.getByRole("searchbox", { name: "Найти карточку" }),
+      "Чай",
+    );
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(6));
+    const url = new URL(String(fetch.mock.calls[5][0]), "https://example.test");
+    expect(url.searchParams.get("q")).toBe("Чай");
+    expect(url.searchParams.get("archived")).toBe("true");
+    expect(
+      screen.getByLabelText("Аккаунт: Локальный пользователь (макет)"),
+    ).toBeInTheDocument();
+  });
   it("requests cards only after structure and renders real columns and lanes", async () => {
     const fetch = vi
       .spyOn(globalThis, "fetch")
@@ -86,9 +133,10 @@ describe("working board homepage", () => {
     expect(
       screen.getByRole("button", { name: "Свернуть меню" }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "Архив карточек" }),
-    ).toHaveAttribute("href", "/archive");
+    expect(screen.getByRole("link", { name: "Архив копий" })).toHaveAttribute(
+      "href",
+      "/archive",
+    );
   });
   it("has a useful empty state when the working database has no boards", async () => {
     vi.spyOn(boardApi, "list").mockResolvedValue([]);
