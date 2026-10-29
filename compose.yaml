@@ -7,6 +7,7 @@ x-application: &application
   environment: &app-environment
     BOARD_STORAGE: ${BOARD_STORAGE:-archive}
     BOARD_BACKUP_ROOT: /data/backups
+    BOARD_UPLOAD_ROOT: /data/uploads
     BOARD_DATABASE_URL: postgresql+psycopg://board@db:5432/board
     BOARD_DATABASE_PASSWORD_FILE: /run/secrets/postgres_password
   secrets:
@@ -16,6 +17,7 @@ x-application: &application
       source: ./backups
       target: /data/backups
       read_only: true
+    - uploads:/data/uploads
   logging:
     driver: json-file
     options:
@@ -118,5 +120,6 @@ secrets:
     file: ./.secrets/postgres_password
 
 volumes:
+  uploads:
   postgres_data:
   frontend_node_modules:

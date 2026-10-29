@@ -17,6 +17,7 @@ RUN pip install --no-cache-dir -r /tmp/requirements-runtime.lock \
     && groupadd --gid 10001 board \
     && useradd --uid 10001 --gid board --create-home board
 
+RUN mkdir -p /data/uploads && chown board:board /data/uploads
 COPY backend /app/backend
 COPY --from=frontend-build /build/dist /app/frontend/dist
 COPY kaiten_backup /app/kaiten_backup

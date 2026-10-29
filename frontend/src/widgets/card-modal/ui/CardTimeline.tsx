@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { CommentComposer } from "./CommentComposer";
 import type { CardDetail } from "@/entities/card";
 import { Avatar, Disclosure, Value } from "@/shared/ui";
 import { RichText } from "@/shared/ui/rich-text";
@@ -26,15 +27,31 @@ export function CardTimeline({
   model,
   files,
   onPreview,
+  hidden = false,
 }: {
   model: CardDetail;
   files: Attachment[];
   onPreview: (url: string) => void;
+  hidden?: boolean;
 }) {
   const [tab, setTab] = useState<Tab>("comments");
   const [limit, setLimit] = useState(40);
+  const entries = useRef<HTMLDivElement>(null);
+  const scrollOnSend = useRef(false);
+  useEffect(() => {
+    if (tab === "comments" && entries.current && !hidden) {
+      const el = entries.current;
+      if (scrollOnSend.current || el.scrollTop === 0)
+        el.scrollTop = el.scrollHeight;
+      scrollOnSend.current = false;
+    }
+  }, [model.comments.length, tab, hidden]);
   return (
-    <aside className={styles.timeline} aria-label="Обсуждение и история">
+    <aside
+      hidden={hidden}
+      className={styles.timeline}
+      aria-label="Обсуждение и история"
+    >
       <div className={styles.tabs} role="tablist" aria-label="Разделы истории">
         {(Object.keys(titles) as Tab[]).map((name) => (
           <button
@@ -75,6 +92,7 @@ export function CardTimeline({
       </div>
       <div
         className={styles.entries}
+        ref={entries}
         role="tabpanel"
         id={`card-panel-${tab}`}
         aria-labelledby={`card-tab-${tab}`}
@@ -82,48 +100,66 @@ export function CardTimeline({
         {!model[tab].length && (
           <p className={styles.empty}>В этом разделе пока нет записей</p>
         )}
+        {tab === "comments" && model.comments.length > limit && (
+          <button className={styles.more} onClick={() => setLimit(limit + 40)}>
+            Показать предыдущие сообщения
+          </button>
+        )}
         {tab === "comments" &&
-          model.comments.slice(0, limit).map((comment) => (
-            <article key={comment.id} className={styles.comment}>
-              <div className={styles.author}>
-                <Avatar label={comment.author?.name || "Участник"} />
-                <div>
-                  <strong>
-                    {comment.author?.name || "Неизвестный участник"}
-                  </strong>
-                  <small>
-                    {formatDate(comment.created)}
-                    {comment.edited && " · изменён"}
-                    {comment.internal && " · внутренний"}
-                  </small>
+          model.comments
+            .slice(0, limit)
+            .reverse()
+            .map((comment) => (
+              <article
+                key={comment.id}
+                className={`${styles.comment} ${comment.extra && typeof comment.extra === "object" && !Array.isArray(comment.extra) && comment.extra.local ? styles.ownComment : ""}`}
+              >
+                <div className={styles.author}>
+                  <Avatar label={comment.author?.name || "Участник"} />
+                  <div>
+                    <strong>
+                      {comment.author?.name ||
+                        (comment.extra &&
+                        typeof comment.extra === "object" &&
+                        !Array.isArray(comment.extra) &&
+                        comment.extra.local
+                          ? "Локальный пользователь"
+                          : "Неизвестный участник")}
+                    </strong>
+                    <small>
+                      {formatDate(comment.created)}
+                      {comment.edited && " · изменён"}
+                      {comment.internal && " · внутренний"}
+                    </small>
+                  </div>
                 </div>
-              </div>
-              {comment.deleted ? (
-                <p className={styles.empty}>Комментарий удалён</p>
-              ) : (
-                <>
-                  <RichText
-                    text={comment.text}
-                    type={comment.textFormat}
-                    imageMap={model.imageMap}
-                    onPreview={onPreview}
-                  />
-                  {files.some(
-                    (file) =>
-                      "commentId" in file && file.commentId === comment.id,
-                  ) && (
-                    <Attachments
-                      files={files.filter(
-                        (file) =>
-                          "commentId" in file && file.commentId === comment.id,
-                      )}
+                {comment.deleted ? (
+                  <p className={styles.empty}>Комментарий удалён</p>
+                ) : (
+                  <>
+                    <RichText
+                      text={comment.text}
+                      type={comment.textFormat}
+                      imageMap={model.imageMap}
                       onPreview={onPreview}
                     />
-                  )}
-                </>
-              )}
-            </article>
-          ))}
+                    {files.some(
+                      (file) =>
+                        "commentId" in file && file.commentId === comment.id,
+                    ) && (
+                      <Attachments
+                        files={files.filter(
+                          (file) =>
+                            "commentId" in file &&
+                            file.commentId === comment.id,
+                        )}
+                        onPreview={onPreview}
+                      />
+                    )}
+                  </>
+                )}
+              </article>
+            ))}
         {tab === "history" &&
           model.history.slice(0, limit).map((event) => (
             <article className={styles.comment} key={event.id}>
@@ -143,12 +179,21 @@ export function CardTimeline({
               </Disclosure>
             </article>
           ))}
-        {model[tab].length > limit && (
+        {tab !== "comments" && model[tab].length > limit && (
           <button className={styles.more} onClick={() => setLimit(limit + 40)}>
             Показать ещё
           </button>
         )}
       </div>
+      {tab === "comments" && (
+        <CommentComposer
+          cardId={model.card.id}
+          disabled={model.card.archived}
+          onSent={() => {
+            scrollOnSend.current = true;
+          }}
+        />
+      )}
     </aside>
   );
 }

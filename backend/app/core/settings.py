@@ -11,6 +11,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 class Settings:
     backup_root: Path = PROJECT_ROOT / 'backups'
     frontend_root: Path = PROJECT_ROOT / 'frontend' / 'dist'
+    upload_root: Path = PROJECT_ROOT / '.local/uploads'
     storage: str = 'archive'
     database_url: str = field(default=f'sqlite:///{(PROJECT_ROOT / ".local/board.db").as_posix()}', repr=False)
 
@@ -29,4 +30,5 @@ class Settings:
             database_url = make_url(database_url).set(password=password).render_as_string(hide_password=False)
         return cls(backup_root=Path(os.getenv('BOARD_BACKUP_ROOT', str(cls.backup_root))).resolve(),
                    frontend_root=Path(os.getenv('BOARD_FRONTEND_ROOT', str(cls.frontend_root))).resolve(),
+                   upload_root=Path(os.getenv('BOARD_UPLOAD_ROOT', str(cls.upload_root))).resolve(),
                    storage=storage, database_url=database_url)

@@ -9,6 +9,8 @@ export function Modal({
   closeLabel = "Закрыть карточку",
   dismissible = true,
   size = "large",
+  fullscreen = false,
+  actions,
 }: {
   children: React.ReactNode;
   labelledBy: string;
@@ -16,6 +18,8 @@ export function Modal({
   closeLabel?: string;
   dismissible?: boolean;
   size?: "large" | "compact";
+  fullscreen?: boolean;
+  actions?: React.ReactNode;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -31,6 +35,7 @@ export function Modal({
       ref={dialog}
       className={styles.modal}
       data-size={size}
+      data-fullscreen={fullscreen}
       onCancel={(event) => {
         if (!dismissible) event.preventDefault();
       }}
@@ -51,15 +56,18 @@ export function Modal({
           event.currentTarget.close();
       }}
     >
-      <button
-        className={styles.close}
-        onClick={() => dialog.current?.close()}
-        aria-label={closeLabel}
-        disabled={!dismissible}
-        autoFocus
-      >
-        ×
-      </button>
+      <div className={actions ? styles.controls : undefined}>
+        <button
+          className={styles.close}
+          onClick={() => dialog.current?.close()}
+          aria-label={closeLabel}
+          disabled={!dismissible}
+          autoFocus
+        >
+          ×
+        </button>
+        {actions}
+      </div>
       {children}
     </dialog>
   );

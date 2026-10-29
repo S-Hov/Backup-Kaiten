@@ -7,6 +7,7 @@ import { RichText } from "@/shared/ui/rich-text";
 import { safeLink } from "@/shared/lib/rich-text";
 import { formatDate } from "@/shared/lib/format";
 import { CardTimeline } from "./CardTimeline";
+import { CardMove } from "./CardMove";
 import styles from "./CardModal.module.scss";
 
 function Section({
@@ -40,9 +41,11 @@ function Field({
 export function CardContent({
   model,
   onOpen,
+  panelHidden = false,
 }: {
   model: CardDetail;
   onOpen: (id: string) => void;
+  panelHidden?: boolean;
 }) {
   const [preview, setPreview] = useState<string | null>(null);
   const card = model.card;
@@ -56,8 +59,11 @@ export function CardContent({
     }));
   return (
     <>
-      <div className={styles.columns}>
+      <div
+        className={`${styles.columns} ${panelHidden ? styles.panelHidden : ""}`}
+      >
         <div className={styles.main}>
+          <CardMove card={card} />
           <CardTags tags={model.tags} />
           <dl className={styles.fields}>
             <Field label="Тип">{card.type?.name || "Карточка"}</Field>
@@ -263,9 +269,7 @@ export function CardContent({
             className={styles.details}
             summary="Все сохранённые данные"
           >
-            <p>
-            Исходные сведения, сохранённые при переносе карточки.
-            </p>
+            <p>Исходные сведения, сохранённые при переносе карточки.</p>
             <Value value={model.raw} />
           </Disclosure>
           {model.source.diagnostics.length > 0 && (
@@ -281,7 +285,12 @@ export function CardContent({
             </Disclosure>
           )}
         </div>
-        <CardTimeline model={model} files={files} onPreview={setPreview} />
+        <CardTimeline
+          model={model}
+          files={files}
+          onPreview={setPreview}
+          hidden={panelHidden}
+        />
       </div>
       <ImagePreview
         url={preview}

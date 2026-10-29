@@ -35,6 +35,26 @@
   background: var(--surface-hover);
   color: var(--text-strong);
 }
+.controls {
+  position: absolute;
+  top: var(--space-8);
+  right: var(--space-6);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.controls .close {
+  position: static;
+}
+.modal[data-fullscreen="true"] {
+  width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+}
 @media (max-width: 760px) {
   .modal:not([data-size="compact"]) {
     width: 100vw;

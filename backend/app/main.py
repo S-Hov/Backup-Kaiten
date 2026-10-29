@@ -47,7 +47,7 @@ def create_app(settings=None, repository=None, attachments=None, board_repositor
     app = FastAPI(title='Kaiten Board API', version='0.2.0', lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url='/api/v1/openapi.json')
     app.state.cards = CardService(repository, attachments or archive)
-    app.state.boards = BoardService(board_repository, settings.backup_root)
+    app.state.boards = BoardService(board_repository, settings.backup_root, settings.upload_root)
     app.state.settings = settings
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=['127.0.0.1', 'localhost'])
 

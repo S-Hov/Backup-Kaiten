@@ -4,7 +4,7 @@ from decimal import Decimal
 from uuid import UUID
 from urllib.parse import urlsplit
 
-from sqlalchemy import select, or_
+from sqlalchemy import func, select, or_
 from sqlalchemy.orm import Session
 from . import board_models as m
 from .models import ArchiveCard, ArchiveSnapshot
@@ -34,7 +34,7 @@ def read_card_details(engine, card_id):
         lane = session.get(m.Lane, card.lane_id) if card.lane_id else None
         card_type = session.get(m.CardType, card.type_id) if card.type_id else None
         comments = list(session.scalars(select(m.Comment).where(m.Comment.card_id == card_id, m.Comment.is_stub.is_(False))
-            .order_by(m.Comment.source_created_at.desc(), m.Comment.id)))
+            .order_by(func.coalesce(m.Comment.source_created_at, m.Comment.created_at).desc(), m.Comment.id)))
         members = list(session.execute(select(m.CardMember.user_id, m.CardMember.role).where(m.CardMember.card_id == card_id)))
         subscribers = list(session.scalars(select(m.CardSubscriber.user_id).where(m.CardSubscriber.card_id == card_id)))
         tags = list(session.scalars(select(m.Tag).join(m.CardTag, m.CardTag.tag_id == m.Tag.id).where(m.CardTag.card_id == card_id).order_by(m.Tag.name, m.Tag.id)))

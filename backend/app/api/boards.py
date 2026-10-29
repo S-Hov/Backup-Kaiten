@@ -1,8 +1,9 @@
 from typing import Annotated
 from typing import Any
 from uuid import UUID
-from fastapi import APIRouter, Depends, Request, Query
-from pydantic import BaseModel, StringConstraints
+from fastapi import APIRouter, Depends, Request, Query, HTTPException
+from pydantic import BaseModel, StringConstraints, Field, ValidationError
+from starlette.concurrency import run_in_threadpool
 from starlette.responses import FileResponse
 from backend.app.application.boards import BoardService
 
@@ -77,6 +78,21 @@ class CreatedCard(BaseModel):
     id: UUID
 
 
+class MoveNext(BaseModel):
+    version: int = Field(ge=1)
+
+
+class CommentFile(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+    data: str = Field(max_length=21 * 1024 * 1024)
+
+
+class NewComment(BaseModel):
+    requestId: UUID
+    text: Annotated[str, StringConstraints(strip_whitespace=True, max_length=20000)] = ''
+    files: list[CommentFile] = Field(default_factory=list, max_length=10)
+
+
 class CardDetail(BaseModel):
     schemaVersion: int
     card: dict[str, Any]
@@ -140,6 +156,28 @@ def image(attachment_id: UUID, service: Service):
 @images.get('/cards/{card_id}/detail', response_model=CardDetail)
 def card_detail(card_id: UUID, service: Service):
     return service.detail(card_id)
+
+
+@images.post('/cards/{card_id}/move-next', response_model=CreatedCard)
+def move_next(card_id: UUID, body: MoveNext, service: Service):
+    return service.move_next(card_id, body.version)
+
+
+@images.post('/cards/{card_id}/comments', response_model=CreatedCard, status_code=201)
+async def add_comment(card_id: UUID, request: Request, service: Service):
+    if request.headers.get('content-type', '').split(';', 1)[0].strip().lower() != 'application/json':
+        raise HTTPException(415, 'Используйте JSON для отправки комментария')
+    # Bound the complete encoded body before parsing/decoding attachments.
+    data = bytearray()
+    async for chunk in request.stream():
+        if len(data) + len(chunk) > 22 * 1024 * 1024:
+            raise HTTPException(413, 'Общий размер вложений — не более 15 МБ')
+        data.extend(chunk)
+    try:
+        body = NewComment.model_validate_json(data)
+    except ValidationError as error:
+        raise HTTPException(422, 'Неверные данные комментария') from error
+    return await run_in_threadpool(service.add_comment, card_id, body.requestId, body.text, body.files)
 
 
 @images.get('/attachments/{attachment_id}/content')

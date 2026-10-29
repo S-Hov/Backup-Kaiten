@@ -1,4 +1,10 @@
 const paths = {
+  maximize: "M4 4h16v16H4z",
+  restore: "M8 4h12v12M4 8h12v12H4z",
+  panel: "M3 4h18v16H3zM15 4v16",
+  attach: "m8 13 7-7a3 3 0 0 1 4 4L9 20a5 5 0 0 1-7-7L13 2M5 15l10-10",
+  send: "m3 3 19 9-19 9 4-9-4-9zM7 12h15",
+  link: "M10 13a5 5 0 0 0 7 0l4-4a5 5 0 0 0-7-7l-2 2M14 11a5 5 0 0 0-7 0l-4 4a5 5 0 0 0 7 7l2-2",
   lists: "M3 4h7v16H3zM14 4h7v16h-7zM5 8h3M16 8h3M5 12h3M16 12h3",
   search: "M21 21l-5-5M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0",
   plus: "M12 5v14M5 12h14",

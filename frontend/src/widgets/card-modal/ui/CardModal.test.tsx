@@ -9,6 +9,7 @@ const dialogPrototype = HTMLDialogElement.prototype;
 const oldShow = Object.getOwnPropertyDescriptor(dialogPrototype, "showModal");
 const oldClose = Object.getOwnPropertyDescriptor(dialogPrototype, "close");
 beforeEach(() => {
+  localStorage.clear();
   Object.defineProperty(dialogPrototype, "showModal", {
     configurable: true,
     value: function (this: HTMLDialogElement) {
@@ -144,4 +145,53 @@ it("shows an unavailable-card error inside a closable modal", async () => {
   expect(
     screen.getByRole("button", { name: "Закрыть карточку" }),
   ).toBeInTheDocument();
+});
+
+it("remembers fullscreen and hidden discussion when opening another card", async () => {
+  vi.spyOn(globalThis, "fetch").mockImplementation(
+    async () => new Response(JSON.stringify(cardDetailFixture())),
+  );
+  const first = render(
+    wrap(
+      <CardModal
+        cardId={cardDetailFixture().card.id}
+        onClose={vi.fn()}
+        onOpen={vi.fn()}
+      />,
+    ),
+  );
+  await screen.findByRole("dialog", { name: "Заказ на кружки" });
+  await userEvent.click(screen.getByRole("button", { name: "На весь экран" }));
+  expect(screen.getByRole("dialog")).toHaveAttribute("data-fullscreen", "true");
+  await userEvent.click(
+    screen.getByRole("button", { name: "Скрыть панель комментариев" }),
+  );
+  expect(
+    screen.queryByRole("complementary", { name: "Обсуждение и история" }),
+  ).not.toBeInTheDocument();
+  first.unmount();
+  render(
+    wrap(
+      <CardModal
+        cardId={cardDetailFixture().card.id}
+        onClose={vi.fn()}
+        onOpen={vi.fn()}
+      />,
+    ),
+  );
+  await screen.findByRole("dialog", { name: "Заказ на кружки" });
+  expect(screen.getByRole("dialog")).toHaveAttribute("data-fullscreen", "true");
+  expect(
+    screen.getByRole("button", { name: "Показать панель комментариев" }),
+  ).toHaveAttribute("aria-expanded", "false");
+  await userEvent.click(
+    screen.getByRole("button", { name: "Свернуть в окно" }),
+  );
+  await userEvent.click(
+    screen.getByRole("button", { name: "Показать панель комментариев" }),
+  );
+  expect(
+    screen.getByRole("complementary", { name: "Обсуждение и история" }),
+  ).toBeInTheDocument();
+  expect(localStorage.getItem("card-modal.fullscreen")).toBe("false");
 });

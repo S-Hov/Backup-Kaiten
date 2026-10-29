@@ -46,7 +46,7 @@ class BoardApiTests(unittest.TestCase):
             session.flush()
             session.add(Column(id=self.child, board_id=self.board_id, parent_column_id=self.parent,
                                title='В процессе', sort_order=Decimal('1.02')))
-        settings = Settings(backup_root=root / 'no-json-archive', database_url=self.url)
+        settings = Settings(backup_root=root / 'no-json-archive', upload_root=root / 'uploads', database_url=self.url)
         self.app = create_app(settings=settings, board_repository=SqlBoardRepository(self.engine))
         self.client = TestClient(self.app, base_url='http://127.0.0.1')
 
@@ -288,6 +288,57 @@ class BoardApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual([item['title'] for item in response.json()['items']], ['Архив'])
         self.assertEqual(self.card_page(lane, q='Архив').json()['items'], [])
+
+    def test_move_next_preserves_lane_records_history_and_rejects_stale_retries(self):
+        first, second, lane = self.seed_cards()
+        with Session(self.engine) as session, session.begin():
+            session.get(Card, first).column_id = self.child
+        url = f'/api/v1/cards/{first}/move-next'
+        self.assertEqual(self.client.post(url, json={'version': 1}).status_code, 200)
+        detail = self.client.get(f'/api/v1/cards/{first}/detail').json()
+        self.assertEqual(detail['card']['column']['id'], str(self.second))
+        self.assertEqual(detail['card']['lane']['id'], str(lane))
+        self.assertEqual(detail['card']['version'], 2)
+        self.assertEqual(detail['history'][0]['column'], 'Готово')
+        self.assertEqual(self.client.post(url, json={'version': 1}).status_code, 409)
+        self.assertEqual(self.client.post(url, json={'version': 2}).status_code, 400)
+        with Session(self.engine) as session:
+            self.assertEqual(len(list(session.scalars(select(models.CardLocationHistory).where(models.CardLocationHistory.card_id == first)))), 1)
+
+    def test_chat_persists_text_links_files_and_deduplicates_retries(self):
+        first, second, lane = self.seed_cards()
+        data = b'\x89PNG\r\n\x1a\nlocal-test'
+        payload = {'requestId':str(uuid4()), 'text':'Текст https://example.com', 'files':[{'name':'../макет.png', 'data':base64.b64encode(data).decode()}]}
+        url = f'/api/v1/cards/{first}/comments'
+        response = self.client.post(url, json=payload)
+        self.assertEqual(response.status_code, 201, response.text)
+        self.assertEqual(self.client.post(url, json=payload).json(), response.json())
+        detail = self.client.get(f'/api/v1/cards/{first}/detail').json()
+        comment = next(row for row in detail['comments'] if row['id'] == response.json()['id'])
+        self.assertEqual(comment['text'], payload['text'])
+        self.assertTrue(comment['extra']['local'])
+        file = next(row for row in detail['files'] if row['commentId'] == comment['id'])
+        self.assertEqual(file['name'], 'макет.png')
+        self.assertEqual(file['mime'], 'image/png')
+        self.assertEqual(self.client.get(file['url']).content, data)
+        self.assertEqual(len(list(self.app.state.settings.upload_root.iterdir())), 1)
+        self.assertEqual(self.client.post(url, json=dict(payload,text='Изменён')).status_code, 400)
+        self.assertEqual(self.client.post(url, json={'requestId':str(uuid4()),'files':[{'name':'evil.html','data':base64.b64encode(b'<script>bad</script>').decode()}]}).status_code,201)
+        files = self.client.get(f'/api/v1/cards/{first}/detail').json()['files']
+        html = next(file for file in files if file['name']=='evil.html')
+        self.assertTrue(self.client.get(html['url']).headers['content-disposition'].startswith('attachment'))
+
+    def test_chat_rejects_invalid_content_and_rolls_back_failed_file_write(self):
+        first, second, lane = self.seed_cards()
+        url=f'/api/v1/cards/{first}/comments'
+        self.assertEqual(self.client.post(url,json={'requestId':str(uuid4()),'text':'  '}).status_code,400)
+        self.assertEqual(self.client.post(url,json={'requestId':str(uuid4()),'files':[{'name':'file','data':'invalid!'}]}).status_code,400)
+        payload={'requestId':str(uuid4()),'text':'Не сохранить','files':[{'name':'file','data':'YWJj'}]}
+        with patch.object(Path, 'open', side_effect=OSError('disk full')):
+            self.assertEqual(self.client.post(url,json=payload).status_code,500)
+        with Session(self.engine) as session:
+            self.assertIsNone(session.scalar(select(models.Comment.id).where(models.Comment.text=='Не сохранить')))
+        self.assertEqual(self.client.post(f'/api/v1/cards/{uuid4()}/comments',json=payload).status_code,404)
 
     def test_local_create_is_persisted_and_repeated_request_does_not_duplicate(self):
         first, second, lane = self.seed_cards()

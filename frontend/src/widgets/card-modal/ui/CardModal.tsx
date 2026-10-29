@@ -3,6 +3,8 @@ import { useEffect } from "react";
 import { cardQueries } from "@/entities/card";
 import { Modal } from "@/shared/ui/modal";
 import { notify } from "@/shared/ui/notifications";
+import { Icon } from "@/shared/ui/icon";
+import { useStoredFlag } from "@/shared/lib/use-stored-flag";
 import { CardContent } from "./CardContent";
 import styles from "./CardModal.module.scss";
 
@@ -16,6 +18,8 @@ export function CardModal({
   onOpen: (id: string) => void;
 }) {
   const detail = useQuery(cardQueries.detail(cardId));
+  const [fullscreen, toggleFullscreen] = useStoredFlag("card-modal.fullscreen");
+  const [panelHidden, togglePanel] = useStoredFlag("card-modal.panel-hidden");
   const card = detail.data?.card;
   useEffect(() => {
     if (!card) return;
@@ -34,7 +38,41 @@ export function CardModal({
     }
   }
   return (
-    <Modal labelledBy="working-card-title" onClose={onClose}>
+    <Modal
+      labelledBy="working-card-title"
+      onClose={onClose}
+      fullscreen={fullscreen}
+      actions={
+        <>
+          <button
+            className={styles.windowButton}
+            onClick={toggleFullscreen}
+            aria-label={fullscreen ? "Свернуть в окно" : "На весь экран"}
+            title={fullscreen ? "Свернуть в окно" : "На весь экран"}
+            aria-pressed={fullscreen}
+          >
+            <Icon name={fullscreen ? "restore" : "maximize"} size={18} />
+          </button>
+          <button
+            className={styles.windowButton}
+            onClick={togglePanel}
+            aria-label={
+              panelHidden
+                ? "Показать панель комментариев"
+                : "Скрыть панель комментариев"
+            }
+            title={
+              panelHidden
+                ? "Показать панель комментариев"
+                : "Скрыть панель комментариев"
+            }
+            aria-expanded={!panelHidden}
+          >
+            <Icon name="panel" size={18} />
+          </button>
+        </>
+      }
+    >
       <div className={styles.layout}>
         <header className={styles.header}>
           <div className={styles.breadcrumb}>
@@ -82,6 +120,7 @@ export function CardModal({
             key={detail.data.card.id}
             model={detail.data}
             onOpen={onOpen}
+            panelHidden={panelHidden}
           />
         )}
       </div>

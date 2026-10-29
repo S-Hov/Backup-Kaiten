@@ -129,6 +129,14 @@ class SqlBoardRepository:
                 raise FileNotFoundError('Файл не найден')
             return {'name': row['name'], 'storageKey': row['storage_key'], 'mime': row['mime_type'] or 'application/octet-stream'}
 
+    def move_next(self, card_id, version):
+        from .card_operations import move_next
+        return move_next(self.engine, card_id, version)
+
+    def add_comment(self, card_id, request_id, text, files, upload_root):
+        from .card_operations import add_comment
+        return add_comment(self.engine, card_id, request_id, text, files, upload_root)
+
     def detail(self, card_id):
         from .card_details import read_card_details
         return read_card_details(self.engine, card_id)
