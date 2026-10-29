@@ -1,4 +1,17 @@
-export const routePaths = { board: "/", archive: "/archive" } as const;
+export const routePaths = {
+  board: "/",
+  archive: "/archive",
+  login: "/login",
+  activate: "/activate",
+  users: "/users",
+  profile: "/profile",
+} as const;
+export const pageTitles: Record<string, string> = {
+  [routePaths.login]: "Вход · Заказы",
+  [routePaths.activate]: "Установка пароля · Заказы",
+  [routePaths.users]: "Пользователи · Заказы",
+  [routePaths.profile]: "Профиль · Заказы",
+};
 export const routeParams = {
   board: "board",
   card: "cardId",

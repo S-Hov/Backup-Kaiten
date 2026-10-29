@@ -1,5 +1,6 @@
 export {
   routePaths,
+  pageTitles,
   routeParams,
   routeUrls,
   readBoardLocation,

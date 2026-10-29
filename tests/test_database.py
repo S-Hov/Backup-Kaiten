@@ -67,7 +67,7 @@ class DatabaseTests(unittest.TestCase):
 
     def test_database_uses_same_http_contract_and_storage(self):
         import_archive(self.source, self.repo, self.snapshot)
-        app = create_app(Settings(backup_root=self.backups, storage='database', database_url=self.url))
+        app = create_app(Settings(auth_required=False, backup_root=self.backups, storage='database', database_url=self.url))
         with TestClient(app, base_url='http://127.0.0.1') as client:
             self.assertEqual(client.get('/api/v1/ready').status_code, 200)
             response = client.get('/api/v1/cards/123', params={'snapshot': self.snapshot})
@@ -79,7 +79,7 @@ class DatabaseTests(unittest.TestCase):
 
     def test_readiness_detects_missing_database_schema(self):
         missing_url = f'sqlite:///{(Path(self.temp.name) / "empty.db").as_posix()}'
-        app = create_app(Settings(backup_root=self.backups, storage='database', database_url=missing_url))
+        app = create_app(Settings(auth_required=False, backup_root=self.backups, storage='database', database_url=missing_url))
         with TestClient(app, base_url='http://127.0.0.1') as client:
             self.assertEqual(client.get('/api/v1/health').status_code, 200)
             self.assertEqual(client.get('/api/v1/ready').status_code, 503)

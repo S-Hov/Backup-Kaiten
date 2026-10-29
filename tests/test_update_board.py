@@ -263,6 +263,21 @@ class UpdateBoardTests(unittest.TestCase):
                 self.run_update()
         self.assertEqual(self.run_update()['saved'], 1)
 
+    def test_enrichment_tracks_sources_without_reading_json_or_creating_logins(self):
+        self.run_update()
+        from backend.app.application.enrich_existing import enrich_existing
+        from backend.app.infrastructure.database.auth_models import SourceRecord
+        with patch.object(Path, 'read_text', side_effect=AssertionError('No JSON import')):
+            enrich_existing(self.engine)
+            enrich_existing(self.engine)
+        with Session(self.engine) as session:
+            records=list(session.scalars(select(SourceRecord).where(SourceRecord.entity_type=='cards')))
+            self.assertEqual(len(records),1)
+            self.assertEqual(records[0].relative_path,'cards/123/card.json')
+            self.assertEqual(records[0].entity_id,session.scalar(select(m.Card.id).where(m.Card.source_id==123)))
+            self.assertEqual(records[0].snapshot_id,self.snapshot)
+            self.assertIsNone(session.scalar(select(m.Account)))
+
     def test_cli_writes_report_without_overwriting_existing_file(self):
         report = self.root / 'result.json'
         env = {'BOARD_BACKUP_ROOT': str(self.root / 'backups'), 'BOARD_DATABASE_URL': self.url}

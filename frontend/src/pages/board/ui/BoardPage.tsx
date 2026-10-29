@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSession } from "@/entities/session";
 import { boardQueries } from "@/entities/board";
 import { leafColumns, columnTree } from "@/entities/board";
 import { KanbanBoard } from "@/widgets/kanban-board";
@@ -39,6 +40,7 @@ function LoadingBoard() {
 }
 
 export function BoardPage() {
+  const account = useSession();
   const nav = useBoardNavigation();
   const [collapsed, setCollapsed] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -89,7 +91,7 @@ export function BoardPage() {
           onView={(view) => nav.update({ view })}
           onArchive={nav.toggleArchive}
           onAdd={() => setCreating(true)}
-          canAdd={canAdd}
+          canAdd={canAdd && account?.role !== "viewer"}
         />
         <BoardFilters
           search={nav.search}

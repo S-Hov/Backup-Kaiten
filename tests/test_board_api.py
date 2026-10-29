@@ -46,7 +46,7 @@ class BoardApiTests(unittest.TestCase):
             session.flush()
             session.add(Column(id=self.child, board_id=self.board_id, parent_column_id=self.parent,
                                title='В процессе', sort_order=Decimal('1.02')))
-        settings = Settings(backup_root=root / 'no-json-archive', upload_root=root / 'uploads', database_url=self.url)
+        settings = Settings(auth_required=False, backup_root=root / 'no-json-archive', upload_root=root / 'uploads', database_url=self.url)
         self.app = create_app(settings=settings, board_repository=SqlBoardRepository(self.engine))
         self.client = TestClient(self.app, base_url='http://127.0.0.1')
 

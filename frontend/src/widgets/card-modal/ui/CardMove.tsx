@@ -4,9 +4,11 @@ import { cardApi, cardQueries, cardKeys } from "@/entities/card";
 import type { CardDetail } from "@/entities/card";
 import { Icon } from "@/shared/ui/icon";
 import { notify } from "@/shared/ui/notifications";
+import { useSession } from "@/entities/session";
 import styles from "./CardModal.module.scss";
 
 export function CardMove({ card }: { card: CardDetail["card"] }) {
+  const account = useSession();
   const boardId = card.board?.id || "";
   const structure = useQuery({
     ...boardQueries.structure(boardId),
@@ -46,7 +48,11 @@ export function CardMove({ card }: { card: CardDetail["card"] }) {
       <button
         className={styles.moveButton}
         disabled={
-          !next || card.archived || move.isPending || structure.isFetching
+          !next ||
+          card.archived ||
+          account?.role === "viewer" ||
+          move.isPending ||
+          structure.isFetching
         }
         onClick={() => move.mutate()}
         title={

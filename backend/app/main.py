@@ -49,6 +49,11 @@ def create_app(settings=None, repository=None, attachments=None, board_repositor
     app.state.cards = CardService(repository, attachments or archive)
     app.state.boards = BoardService(board_repository, settings.backup_root, settings.upload_root)
     app.state.settings = settings
+    from backend.app.application.auth import AuthService
+    from backend.app.api.auth import router as auth_router
+    from backend.app.api.auth_guard import guard
+    app.state.auth = AuthService(getattr(board_repository, 'engine', engine))
+    app.middleware('http')(guard)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=['127.0.0.1', 'localhost'])
 
     @app.middleware('http')
@@ -86,12 +91,17 @@ def create_app(settings=None, repository=None, attachments=None, board_repositor
         return JSONResponse({'error': 'База данных недоступна. Проверьте подключение и миграции.'}, status_code=503)
 
     app.include_router(router, prefix='/api/v1')
+    app.include_router(auth_router, prefix='/api/v1')
     app.include_router(board_router, prefix='/api/v1')
     app.include_router(board_images, prefix='/api/v1')
     app.include_router(router, prefix='/api', include_in_schema=False)
     app.include_router(assets)
     @app.get('/', include_in_schema=False)
     @app.get('/archive', include_in_schema=False)
+    @app.get('/login', include_in_schema=False)
+    @app.get('/activate', include_in_schema=False)
+    @app.get('/users', include_in_schema=False)
+    @app.get('/profile', include_in_schema=False)
     def frontend():
         path = settings.frontend_root / 'index.html'
         if not path.is_file():

@@ -138,4 +138,6 @@ def update_board(source, engine, snapshot, *, card_ids=None, limit=None, origin=
             count = session.scalar(select(func.count()).select_from(ArchiveCard).where(ArchiveCard.snapshot_id == snapshot))
             summary.update(cards=count, status='partial' if result['status'] == 'partial' else 'limited' if result['limited'] else result['source_status'])
             record.summary = summary
+    from backend.app.application.enrich_existing import enrich_existing
+    result['enrichment'] = enrich_existing(engine)
     return result

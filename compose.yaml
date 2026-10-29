@@ -8,6 +8,8 @@ x-application: &application
     BOARD_STORAGE: ${BOARD_STORAGE:-archive}
     BOARD_BACKUP_ROOT: /data/backups
     BOARD_UPLOAD_ROOT: /data/uploads
+    BOARD_SECURE_COOKIES: ${BOARD_SECURE_COOKIES:-0}
+    BOARD_ALLOWED_ORIGINS: ${BOARD_ALLOWED_ORIGINS:-http://127.0.0.1:8766,http://localhost:8766,http://127.0.0.1:5173,http://localhost:5173}
     BOARD_DATABASE_URL: postgresql+psycopg://board@db:5432/board
     BOARD_DATABASE_PASSWORD_FILE: /run/secrets/postgres_password
   secrets:

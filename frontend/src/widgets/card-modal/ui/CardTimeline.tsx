@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { CommentComposer } from "./CommentComposer";
+import { useSession } from "@/entities/session";
 import type { CardDetail } from "@/entities/card";
 import { Avatar, Disclosure, Value } from "@/shared/ui";
 import { RichText } from "@/shared/ui/rich-text";
@@ -35,6 +36,7 @@ export function CardTimeline({
   hidden?: boolean;
 }) {
   const [tab, setTab] = useState<Tab>("comments");
+  const account = useSession();
   const [limit, setLimit] = useState(40);
   const entries = useRef<HTMLDivElement>(null);
   const scrollOnSend = useRef(false);
@@ -112,7 +114,7 @@ export function CardTimeline({
             .map((comment) => (
               <article
                 key={comment.id}
-                className={`${styles.comment} ${comment.extra && typeof comment.extra === "object" && !Array.isArray(comment.extra) && comment.extra.local ? styles.ownComment : ""}`}
+                className={`${styles.comment} ${account && comment.author?.id === account.userId ? styles.ownComment : ""}`}
               >
                 <div className={styles.author}>
                   <Avatar label={comment.author?.name || "Участник"} />
@@ -188,7 +190,12 @@ export function CardTimeline({
       {tab === "comments" && (
         <CommentComposer
           cardId={model.card.id}
-          disabled={model.card.archived}
+          disabled={model.card.archived || account?.role === "viewer"}
+          disabledReason={
+            model.card.archived
+              ? "Карточка в архиве"
+              : "Доступ только для просмотра"
+          }
           onSent={() => {
             scrollOnSend.current = true;
           }}

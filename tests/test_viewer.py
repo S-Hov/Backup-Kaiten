@@ -95,7 +95,7 @@ class ViewerTests(unittest.TestCase):
         (frontend / 'static').mkdir(parents=True)
         (frontend / 'index.html').write_text('<div id="root"></div>', encoding='utf-8')
         (frontend / 'static/app.js').write_text('/* built bundle */', encoding='utf-8')
-        settings = Settings(backup_root=self.root, frontend_root=frontend)
+        settings = Settings(auth_required=False, backup_root=self.root, frontend_root=frontend)
         app = create_app(settings=settings, repository=self.repo, attachments=self.repo)
         with TestClient(app, base_url='http://127.0.0.1') as client:
             response = client.get('/api/v1/cards/123', params={'snapshot': self.snapshot})
@@ -117,7 +117,7 @@ class ViewerTests(unittest.TestCase):
                 self.assertEqual(client.get(path).status_code, 404)
 
     def test_missing_frontend_build_has_actionable_error(self):
-        app = create_app(Settings(backup_root=self.root, frontend_root=self.root / 'missing'))
+        app = create_app(Settings(auth_required=False, backup_root=self.root, frontend_root=self.root / 'missing'))
         with TestClient(app, base_url='http://127.0.0.1') as client:
             response = client.get('/')
             self.assertEqual(response.status_code, 503)

@@ -40,15 +40,25 @@ export async function apiClient<T>(
       ]),
     ),
   );
+  const csrf =
+    typeof document !== "undefined"
+      ? document.cookie
+          .split("; ")
+          .find((value) => value.startsWith("board_csrf="))
+          ?.slice("board_csrf=".length)
+      : undefined;
   const response = await fetch(
     `/api/v1${path}${query.size ? `?${query}` : ""}`,
     {
       signal: options.signal,
       credentials: "same-origin",
       ...(options.method ? { method: options.method } : {}),
+      headers: {
+        ...(options.body ? { "Content-Type": "application/json" } : {}),
+        ...(options.method === "POST" && csrf ? { "X-CSRF-Token": csrf } : {}),
+      },
       ...(options.body
         ? {
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(options.body),
           }
         : {}),
@@ -73,6 +83,12 @@ export async function apiClient<T>(
     throw new ApiContractError(response.status, error);
   }
   if (!response.ok) {
+    if (
+      response.status === 401 &&
+      !["/auth/login", "/auth/activate", "/auth/me"].includes(path) &&
+      typeof window !== "undefined"
+    )
+      window.dispatchEvent(new Event("auth-expired"));
     const message =
       typeof data === "object" &&
       data !== null &&

@@ -1,3 +1,4 @@
+import { AccountMenu } from "@/features/account-menu";
 import { useEffect, useState } from "react";
 import { Icon } from "@/shared/ui/icon";
 import styles from "./BoardControls.module.scss";
@@ -57,17 +58,7 @@ export function BoardHeader({
           </button>
         )}
       </form>
-      <div
-        className={styles.account}
-        title="Макет аккаунта: авторизация ещё не подключена"
-        aria-label="Аккаунт: Локальный пользователь (макет)"
-      >
-        <div>
-          <strong>Локальный пользователь</strong>
-          <small>Демо-аккаунт</small>
-        </div>
-        <span className={styles.avatar}>ЛП</span>
-      </div>
+      <AccountMenu />
     </header>
   );
 }

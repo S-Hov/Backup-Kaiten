@@ -124,6 +124,10 @@ class User(Imported, Base):
     username: Mapped[str | None] = mapped_column(Text)
     activated: Mapped[bool] = mapped_column(Boolean, default=True)
     virtual: Mapped[bool] = mapped_column(Boolean, default=False)
+    initials: Mapped[str | None] = mapped_column(String(32))
+    timezone: Mapped[str | None] = mapped_column(String(100))
+    language: Mapped[str | None] = mapped_column(String(32))
+    avatar_url: Mapped[str | None] = mapped_column(Text)
 
 
 class Role(Entity, Base):
@@ -139,6 +143,10 @@ class Account(Entity, Base):
     login: Mapped[str] = mapped_column(String(200), unique=True)
     password_hash: Mapped[str | None] = mapped_column(Text)
     active: Mapped[bool] = mapped_column(Boolean, default=False)
+    role: Mapped[str] = mapped_column(String(20), default='member', server_default='member')
+    last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    password_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    disabled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class SpaceMembership(Base):

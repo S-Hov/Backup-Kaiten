@@ -14,6 +14,11 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       new QueryClient({
         queryCache: new QueryCache({
           onError: (error, query) => {
+            if (
+              query.meta?.silent ||
+              (error instanceof ApiError && error.status === 401)
+            )
+              return;
             notify.error(
               typeof query.meta?.errorTitle === "string"
                 ? query.meta.errorTitle
@@ -26,10 +31,12 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
           },
         }),
         mutationCache: new MutationCache({
-          onError: (error) =>
+          onError: (error, _variables, _context, mutation) => {
+            if (mutation.meta?.silent) return;
             notify.error("Не удалось сохранить изменения", {
               description: error.message,
-            }),
+            });
+          },
         }),
         defaultOptions: {
           queries: {

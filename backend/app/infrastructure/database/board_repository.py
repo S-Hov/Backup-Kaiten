@@ -129,19 +129,19 @@ class SqlBoardRepository:
                 raise FileNotFoundError('Файл не найден')
             return {'name': row['name'], 'storageKey': row['storage_key'], 'mime': row['mime_type'] or 'application/octet-stream'}
 
-    def move_next(self, card_id, version):
+    def move_next(self, card_id, version, actor=None):
         from .card_operations import move_next
-        return move_next(self.engine, card_id, version)
+        return move_next(self.engine, card_id, version, actor)
 
-    def add_comment(self, card_id, request_id, text, files, upload_root):
+    def add_comment(self, card_id, request_id, text, files, upload_root, actor=None):
         from .card_operations import add_comment
-        return add_comment(self.engine, card_id, request_id, text, files, upload_root)
+        return add_comment(self.engine, card_id, request_id, text, files, upload_root, actor)
 
     def detail(self, card_id):
         from .card_details import read_card_details
         return read_card_details(self.engine, card_id)
 
-    def create_card(self, board_id, title, column_id, lane_id, request_id):
+    def create_card(self, board_id, title, column_id, lane_id, request_id, actor=None):
         with Session(self.engine) as session, session.begin():
             board = session.scalar(select(Board).where(Board.id == board_id, Board.is_stub.is_(False)).with_for_update())
             if board is None:
@@ -170,6 +170,6 @@ class SqlBoardRepository:
             if abs(order) >= Decimal(10) ** 25:
                 raise ValueError('Нет свободной позиции в колонке')
             card = Card(id=identifier, board_id=board_id, column_id=column_id, lane_id=lane_id, title=title, sort_order=order,
-                type_id=board.default_card_type_id)
+                type_id=board.default_card_type_id, owner_id=actor)
             session.add(card); session.flush()
             return {'id': card.id}

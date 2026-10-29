@@ -1,0 +1,61 @@
+.page {
+  min-height: 100dvh;
+  padding: var(--space-32);
+  background: var(--bg);
+  color: var(--text);
+}
+.page h1 {
+  font-size: var(--font-size-23);
+}
+.page h2 {
+  font-size: var(--font-size-16);
+}
+.section {
+  max-width: 680px;
+  margin: var(--space-24) 0;
+  padding: var(--space-24);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.section p,
+.section small {
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+.section label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin-bottom: var(--space-16);
+  font-size: var(--font-size-12);
+}
+.section input {
+  padding: var(--space-10);
+  color: var(--text);
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+.section button {
+  padding: var(--space-10) var(--space-16);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-radius: var(--radius-md);
+}
+.section button:disabled {
+  opacity: 0.5;
+}
+.section [role="alert"] {
+  color: var(--danger);
+}
+.session {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin-bottom: var(--space-20);
+  overflow-wrap: anywhere;
+}
+.session small {
+  font-size: var(--font-size-11);
+}

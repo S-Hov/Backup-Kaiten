@@ -133,6 +133,7 @@ class BoardProjection:
         return self.upsert(m.User, payload, present(payload, {
             'full_name': ('full_name', TEXT), 'email': 'email', 'username': 'username',
             'activated': ('activated', bool), 'virtual': ('virtual', bool),
+            'initials': 'initials', 'timezone': 'timezone', 'language': 'lng',
         }), stub=not bool(data), reference=True).id
 
     def board(self, source_id):

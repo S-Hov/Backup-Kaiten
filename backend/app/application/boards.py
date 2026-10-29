@@ -18,8 +18,8 @@ class BoardService:
     def cards(self, board_id, column_id, lane_id, limit, cursor, archived=False, query='', tag_id=None):
         return self.repository.cards(board_id, column_id, lane_id, limit, cursor, archived, query, tag_id)
 
-    def create_card(self, board_id, title, column_id, lane_id, request_id):
-        return self.repository.create_card(board_id, title, column_id, lane_id, request_id)
+    def create_card(self, board_id, title, column_id, lane_id, request_id, actor=None):
+        return self.repository.create_card(board_id, title, column_id, lane_id, request_id, actor)
 
     def image(self, attachment_id):
         return self.local_file(self.repository.image(attachment_id))
@@ -30,10 +30,10 @@ class BoardService:
     def detail(self, card_id):
         return self.repository.detail(card_id)
 
-    def move_next(self, card_id, version):
-        return self.repository.move_next(card_id, version)
+    def move_next(self, card_id, version, actor=None):
+        return self.repository.move_next(card_id, version, actor)
 
-    def add_comment(self, card_id, request_id, text, attachments):
+    def add_comment(self, card_id, request_id, text, attachments, actor=None):
         import base64
         import binascii
         files, total = [], 0
@@ -57,7 +57,7 @@ class BoardService:
             files.append((name, data, mime))
         if not text and not files:
             raise ValueError('Введите комментарий или прикрепите файл')
-        return self.repository.add_comment(card_id, request_id, text, files, self.upload_root)
+        return self.repository.add_comment(card_id, request_id, text, files, self.upload_root, actor)
 
     def local_file(self, image):
         if image['storageKey'].startswith('local-upload:'):

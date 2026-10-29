@@ -143,8 +143,8 @@ def cards(board_id: UUID, column_id: UUID, service: Service, lane_id: UUID | Non
 
 
 @router.post('/{board_id}/cards', response_model=CreatedCard, status_code=201)
-def create_card(board_id: UUID, body: CreateCard, service: Service):
-    return service.create_card(board_id, body.title, body.columnId, body.laneId, body.requestId)
+def create_card(board_id: UUID, body: CreateCard, service: Service, request: Request):
+    return service.create_card(board_id, body.title, body.columnId, body.laneId, body.requestId, (request.state.identity or {}).get('userId'))
 
 
 @images.get('/attachments/{attachment_id}/image')
@@ -159,8 +159,8 @@ def card_detail(card_id: UUID, service: Service):
 
 
 @images.post('/cards/{card_id}/move-next', response_model=CreatedCard)
-def move_next(card_id: UUID, body: MoveNext, service: Service):
-    return service.move_next(card_id, body.version)
+def move_next(card_id: UUID, body: MoveNext, service: Service, request: Request):
+    return service.move_next(card_id, body.version, (request.state.identity or {}).get('userId'))
 
 
 @images.post('/cards/{card_id}/comments', response_model=CreatedCard, status_code=201)
@@ -177,7 +177,7 @@ async def add_comment(card_id: UUID, request: Request, service: Service):
         body = NewComment.model_validate_json(data)
     except ValidationError as error:
         raise HTTPException(422, 'Неверные данные комментария') from error
-    return await run_in_threadpool(service.add_comment, card_id, body.requestId, body.text, body.files)
+    return await run_in_threadpool(service.add_comment, card_id, body.requestId, body.text, body.files, (request.state.identity or {}).get('userId'))
 
 
 @images.get('/attachments/{attachment_id}/content')

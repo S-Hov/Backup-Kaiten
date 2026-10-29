@@ -21,10 +21,12 @@ export function CommentComposer({
   cardId,
   disabled,
   onSent,
+  disabledReason = "Отправка недоступна",
 }: {
   cardId: string;
   disabled: boolean;
   onSent: () => void;
+  disabledReason?: string;
 }) {
   const [text, setText] = useState("");
   const [link, setLink] = useState("");
@@ -110,7 +112,7 @@ export function CommentComposer({
       )}
       <textarea
         aria-label="Текст комментария"
-        placeholder={disabled ? "Карточка в архиве" : "Написать сообщение…"}
+        placeholder={disabled ? disabledReason : "Написать сообщение…"}
         value={text}
         maxLength={18000}
         rows={2}
