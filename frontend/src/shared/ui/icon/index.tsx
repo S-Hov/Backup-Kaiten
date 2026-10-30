@@ -13,6 +13,16 @@ const paths = {
   lists: "M3 4h7v16H3zM14 4h7v16h-7zM5 8h3M16 8h3M5 12h3M16 12h3",
   search: "M21 21l-5-5M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0",
   plus: "M12 5v14M5 12h14",
+  check: "m5 12 4 4L19 6",
+  download: "M12 3v12m-5-5 5 5 5-5M5 16v5h14v-5",
+  arrowLeft: "M19 12H5m7-7-7 7 7 7",
+  externalLink: "M15 3h6v6m0-6L10 14M10 3H3v18h18v-7",
+  star: "m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3z",
+  file: "M14 2H4v20h16V8l-6-6zm0 0v6h6M8 13h8M8 17h6",
+  video: "M3 5h12v14H3zM15 10l6-4v12l-6-4",
+  audio: "M9 18V5l12-2v13M9 18a3 3 0 1 1-3-3h3M21 16a3 3 0 1 1-3-3h3",
+  checklist: "M9 5h12M9 12h12M9 19h12M2 5l1 1 2-2M2 12l1 1 2-2M2 19l1 1 2-2",
+  text: "M4 5h16M4 10h16M4 15h16M4 20h10",
   close: "M6 6l12 12M18 6 6 18",
   board: "M3 4h18v16H3zM9 4v16M15 4v16",
   archive: "M4 8h16v12H4zM3 4h18v4H3zM9 12h6",
@@ -32,6 +42,7 @@ export function Icon({
 }) {
   return (
     <svg
+      className="ui-icon"
       width={size}
       height={size}
       viewBox="0 0 24 24"

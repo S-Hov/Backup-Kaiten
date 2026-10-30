@@ -1,3 +1,4 @@
+import { Icon } from "@/shared/ui/icon";
 import { useEffect, useRef } from "react";
 import { Empty } from "@/shared/ui";
 import { fileSize } from "@/shared/lib/format";
@@ -51,7 +52,10 @@ export function Attachments({
               </button>
             ) : (
               <div className="file-placeholder">
-                {file.video ? "▷" : file.audio ? "♫" : "▤"}
+                <Icon
+                  name={file.video ? "video" : file.audio ? "audio" : "file"}
+                  size={32}
+                />
               </div>
             )}
             <div className="file-caption">
@@ -65,7 +69,7 @@ export function Attachments({
               </small>
               {download && (
                 <a href={download} download aria-label={`Скачать ${file.name}`}>
-                  ↓
+                  <Icon name="download" size={18} />
                 </a>
               )}
             </div>
@@ -108,7 +112,7 @@ export function ImagePreview({
           onClick={() => dialog.current?.close()}
           aria-label="Закрыть изображение"
         >
-          ×
+          <Icon name="close" />
         </button>
       </div>
       <img src={url} alt={file?.name ?? "Просмотр вложения"} />
@@ -117,7 +121,7 @@ export function ImagePreview({
         href={safeAssetURL(file?.downloadUrl) ?? `${url}?download=1`}
         download
       >
-        ↓ Скачать оригинал
+        <Icon name="download" size={16} /> Скачать оригинал
       </a>
     </dialog>
   );

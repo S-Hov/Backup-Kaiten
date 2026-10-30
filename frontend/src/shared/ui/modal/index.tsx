@@ -1,3 +1,4 @@
+import { Icon } from "@/shared/ui/icon";
 import { useEffect, useRef } from "react";
 import styles from "./Modal.module.scss";
 
@@ -64,7 +65,7 @@ export function Modal({
           disabled={!dismissible}
           autoFocus
         >
-          ×
+          <Icon name="close" />
         </button>
         {actions}
       </div>

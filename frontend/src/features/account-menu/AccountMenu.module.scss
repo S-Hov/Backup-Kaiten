@@ -139,9 +139,8 @@
   background: var(--surface-hover);
   text-decoration: none;
 }
-.adminSection a span {
+.adminSection a svg {
   color: var(--text-muted);
-  font-size: var(--font-size-18);
 }
 .themePicker {
   min-width: 0;

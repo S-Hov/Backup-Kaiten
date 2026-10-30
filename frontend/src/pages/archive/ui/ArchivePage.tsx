@@ -1,3 +1,4 @@
+import { Icon } from "@/shared/ui/icon";
 import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
@@ -30,7 +31,9 @@ function EmptyState({
 }) {
   return (
     <div className="empty-state">
-      <div className="empty-icon">▤</div>
+      <div className="empty-icon">
+        <Icon name="archive" size={40} />
+      </div>
       <h1>{title}</h1>
       <p>{children}</p>
     </div>
@@ -153,7 +156,7 @@ export function ArchivePage() {
               Номер или название карточки
             </label>
             <div className="search-box">
-              <span aria-hidden="true">⌕</span>
+              <Icon name="search" />
               <input
                 id="card-search"
                 placeholder="Например, 14796378"
@@ -166,7 +169,7 @@ export function ArchivePage() {
                 aria-label="Найти карточку"
                 disabled={!current}
               >
-                ↵
+                <Icon name="search" size={18} />
               </button>
             </div>
           </form>
@@ -222,7 +225,9 @@ export function ArchivePage() {
             </button>
           )}
           <footer className="sidebar-footer">
-            <span className="local-icon">▣</span>
+            <span className="local-icon">
+              <Icon name="archive" size={24} />
+            </span>
             <div>
               Данные на вашем компьютере
               <small>Просмотр сохранённого состояния</small>

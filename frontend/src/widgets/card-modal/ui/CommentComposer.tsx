@@ -90,7 +90,7 @@ export function CommentComposer({
                   changed();
                 }}
               >
-                ×
+                <Icon name="close" size={16} />
               </button>
             </li>
           ))}

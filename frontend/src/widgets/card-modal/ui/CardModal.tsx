@@ -77,7 +77,7 @@ export function CardModal({
         <header className={styles.header}>
           <div className={styles.breadcrumb}>
             {card?.board?.title || "Доска"}
-            <span>›</span>
+            <Icon name="chevron" size={14} />
             {card?.column?.title || "Карточка"}
           </div>
           <div className={styles.meta}>

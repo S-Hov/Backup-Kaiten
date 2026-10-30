@@ -47,6 +47,11 @@ button {
 button:disabled {
   cursor: default;
 }
+.ui-icon {
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
 small {
   font-size: var(--font-size-12);
 }

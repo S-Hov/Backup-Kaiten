@@ -1,3 +1,4 @@
+import { Icon } from "@/shared/ui/icon";
 import { useState } from "react";
 import { CardTags } from "@/entities/card";
 import type { CardDetail } from "@/entities/card";
@@ -81,7 +82,11 @@ export function CardContent({
                   >
                     <Avatar label={member.name} src={member.avatarUrl} />
                     {member.name}
-                    {member.role === 2 && <b title="Ответственный">★</b>}
+                    {member.role === 2 && (
+                      <b title="Ответственный">
+                        <Icon name="star" size={14} />
+                      </b>
+                    )}
                   </span>
                 ))}
                 {!model.members.length && "Не назначены"}
@@ -130,7 +135,7 @@ export function CardContent({
                       className={styles.checkbox}
                       aria-label={item.checked ? "Выполнено" : "Не выполнено"}
                     >
-                      {item.checked ? "✓" : ""}
+                      {item.checked && <Icon name="check" size={14} />}
                     </span>
                     <div>
                       <RichText

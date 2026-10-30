@@ -1,3 +1,4 @@
+import { Icon } from "@/shared/ui/icon";
 import { useState } from "react";
 import type { ReactNode } from "react";
 import type { CardViewModel, Json } from "@/entities/archive";
@@ -22,7 +23,7 @@ function Section({
   count,
   children,
 }: {
-  title: string;
+  title: ReactNode;
   count?: number;
   children: ReactNode;
 }) {
@@ -69,7 +70,9 @@ function Relations({
         >
           <span>#{card.id}</span>
           {card.title ?? "Открыть карточку"}
-          <b>↗</b>
+          <b>
+            <Icon name="externalLink" size={16} />
+          </b>
         </button>
       ))}
     </Section>
@@ -102,7 +105,8 @@ export function CardDetails({
     <div className="card-detail">
       <div className="detail-breadcrumb">
         {c.board}
-        <span>›</span>Карточка #{c.id}
+        <Icon name="chevron" size={14} />
+        Карточка #{c.id}
         <span className="copy-date">Снимок архива</span>
       </div>
       <article className="card-shell">
@@ -113,7 +117,13 @@ export function CardDetails({
             <span
               className={`badge ${c.archived ? "archive-badge" : "active-badge"}`}
             >
-              {c.archived ? "▣ В архиве" : "На доске"}
+              {c.archived ? (
+                <>
+                  <Icon name="archive" size={14} /> В архиве
+                </>
+              ) : (
+                "На доске"
+              )}
             </span>
             {c.asap && <span className="badge urgent">Срочно</span>}
             {c.blocked && <span className="badge urgent">Заблокирована</span>}
@@ -143,10 +153,10 @@ export function CardDetails({
                   }
                 }}
               >
-                ↗
+                <Icon name="link" size={18} />
               </button>
               <button className="text-button" onClick={() => download(model)}>
-                ↓ Скачать данные
+                <Icon name="download" size={16} /> Скачать данные
               </button>
             </div>
           </div>
@@ -159,7 +169,8 @@ export function CardDetails({
         {model.diagnostics.length > 0 && (
           <details className="diagnostic">
             <summary>
-              ⚠ В копии есть замечания · {model.diagnostics.length}
+              <Icon name="alert" size={16} /> В копии есть замечания ·{" "}
+              {model.diagnostics.length}
             </summary>
             <ul>
               {[...new Set(model.diagnostics)].map((item, index) => (
@@ -199,7 +210,7 @@ export function CardDetails({
                             className="responsible-mark"
                             title="Ответственный"
                           >
-                            ★
+                            <Icon name="star" size={14} />
                           </span>
                         )}
                       </span>
@@ -238,7 +249,13 @@ export function CardDetails({
                 </Field>
               ))}
             </dl>
-            <Section title="≡ Описание">
+            <Section
+              title={
+                <>
+                  <Icon name="text" size={16} /> Описание
+                </>
+              }
+            >
               <RichText
                 text={c.description}
                 imageMap={model.imageMap}
@@ -253,7 +270,12 @@ export function CardDetails({
               return (
                 <Section
                   key={checklist.id}
-                  title={`☑ ${checklist.name || "Чек-лист"} · ${done}/${items.length}`}
+                  title={
+                    <>
+                      <Icon name="checklist" size={16} />
+                      {`${checklist.name || "Чек-лист"} · ${done}/${items.length}`}
+                    </>
+                  }
                 >
                   <progress
                     aria-label={`Выполнено пунктов: ${done} из ${items.length}`}
@@ -272,7 +294,7 @@ export function CardDetails({
                             item.checked ? "Выполнено" : "Не выполнено"
                           }
                         >
-                          {item.checked && "✓"}
+                          {item.checked && <Icon name="check" size={12} />}
                         </span>
                         <div>
                           <RichText
@@ -292,7 +314,14 @@ export function CardDetails({
                 </Section>
               );
             })}
-            <Section title="⌁ Файлы" count={model.files.length}>
+            <Section
+              title={
+                <>
+                  <Icon name="attach" size={16} /> Файлы
+                </>
+              }
+              count={model.files.length}
+            >
               <Attachments
                 files={model.files}
                 onPreview={setPreview}
@@ -300,7 +329,14 @@ export function CardDetails({
               />
             </Section>
             {s.links.length > 0 && (
-              <Section title="↗ Ссылки" count={s.links.length}>
+              <Section
+                title={
+                  <>
+                    <Icon name="link" size={16} /> Ссылки
+                  </>
+                }
+                count={s.links.length}
+              >
                 {s.links.map((link, index) => (
                   <div className="external-link" key={link.id ?? index}>
                     {safeLink(link.url) ? (
@@ -383,7 +419,10 @@ export function CardDetails({
           <Discussion model={model} onPreview={setPreview} />
         </div>
         <footer className="card-footer">
-          <span>▣ {model.source.jsonFiles} JSON-файлов прочитано</span>
+          <span>
+            <Icon name="file" size={14} /> {model.source.jsonFiles} JSON-файлов
+            прочитано
+          </span>
           <span>Карточка #{c.id}</span>
         </footer>
       </article>

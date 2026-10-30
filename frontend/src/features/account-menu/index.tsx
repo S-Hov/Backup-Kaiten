@@ -1,3 +1,4 @@
+import { Icon } from "@/shared/ui/icon";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -113,7 +114,7 @@ export function AccountMenu() {
                   <span className={styles.themeLabel}>
                     {label}
                     <span className={styles.themeCheck} aria-hidden="true">
-                      ✓
+                      <Icon name="check" size={14} />
                     </span>
                   </span>
                 </span>
@@ -126,7 +127,7 @@ export function AccountMenu() {
             <span className={styles.sectionTitle}>Администрирование</span>
             <Link to={routePaths.users} onClick={closeMenu}>
               Пользователи
-              <span aria-hidden="true">›</span>
+              <Icon name="chevron" size={16} />
             </Link>
           </nav>
         )}

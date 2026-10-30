@@ -1,3 +1,4 @@
+import { Icon } from "@/shared/ui/icon";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -34,7 +35,9 @@ export function ProfilePage() {
   });
   return (
     <main className={styles.page}>
-      <Link to={routePaths.board}>← На доску</Link>
+      <Link to={routePaths.board}>
+        <Icon name="arrowLeft" size={16} /> На доску
+      </Link>
       <h1>Профиль и безопасность</h1>
       <section className={styles.section}>
         <EditAvatar />

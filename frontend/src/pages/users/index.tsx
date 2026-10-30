@@ -1,3 +1,4 @@
+import { Icon } from "@/shared/ui/icon";
 import { Avatar } from "@/shared/ui";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -135,7 +136,9 @@ export function UsersPage() {
   if (me?.role !== "admin")
     return (
       <main className={styles.page}>
-        <Link to={routePaths.board}>← На доску</Link>
+        <Link to={routePaths.board}>
+          <Icon name="arrowLeft" size={16} /> На доску
+        </Link>
         <h1>Нужны права администратора</h1>
       </main>
     );
@@ -147,7 +150,9 @@ export function UsersPage() {
   );
   return (
     <main className={styles.page}>
-      <Link to={routePaths.board}>← На доску</Link>
+      <Link to={routePaths.board}>
+        <Icon name="arrowLeft" size={16} /> На доску
+      </Link>
       <h1>
         Пользователи <small>{users.data?.length || 0}</small>
       </h1>
