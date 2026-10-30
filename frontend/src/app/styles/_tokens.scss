@@ -234,7 +234,7 @@
   --scrollbar-track: #0b0c0f;
 }
 
-// A neutral light palette, including statuses and tag colors.
+// A neutral light palette; tag colors stay independent of the theme.
 :root[data-theme="monochrome"],
 [data-theme-preview="monochrome"] {
   color-scheme: light;
@@ -272,10 +272,6 @@
   --skeleton: #dedede;
   --scrollbar-thumb: #a3a3a3;
   --scrollbar-track: #ededed;
-  @for $i from 1 through 17 {
-    --tag-color-#{$i}-bg: #e8e8e8;
-    --tag-color-#{$i}-text: #262626;
-  }
 }
 
 // GitHub Dark-inspired canvas, neutral surfaces and blue accents.
@@ -318,9 +314,8 @@
   --scrollbar-track: #0d1117;
 }
 
-:root,
-:root[data-theme="light"],
-[data-theme-preview="light"] {
+// Tag colors identify labels and remain the same in every theme.
+:root {
   --tag-color-1-bg: hsl(4 65% 91%);
   --tag-color-1-text: hsl(4 50% 29%);
   --tag-color-2-bg: hsl(24 65% 91%);
@@ -355,46 +350,4 @@
   --tag-color-16-text: hsl(342 50% 29%);
   --tag-color-17-bg: hsl(18 65% 91%);
   --tag-color-17-text: hsl(18 50% 29%);
-}
-
-:root[data-theme="github"],
-[data-theme-preview="github"],
-:root[data-theme="dark"],
-:root[data-theme="midnight"],
-[data-theme-preview="dark"],
-[data-theme-preview="midnight"] {
-  --tag-color-1-bg: hsl(4 28% 25%);
-  --tag-color-1-text: hsl(4 70% 82%);
-  --tag-color-2-bg: hsl(24 28% 25%);
-  --tag-color-2-text: hsl(24 70% 82%);
-  --tag-color-3-bg: hsl(44 28% 25%);
-  --tag-color-3-text: hsl(44 70% 82%);
-  --tag-color-4-bg: hsl(64 28% 25%);
-  --tag-color-4-text: hsl(64 70% 82%);
-  --tag-color-5-bg: hsl(84 28% 25%);
-  --tag-color-5-text: hsl(84 70% 82%);
-  --tag-color-6-bg: hsl(110 28% 25%);
-  --tag-color-6-text: hsl(110 70% 82%);
-  --tag-color-7-bg: hsl(140 28% 25%);
-  --tag-color-7-text: hsl(140 70% 82%);
-  --tag-color-8-bg: hsl(166 28% 25%);
-  --tag-color-8-text: hsl(166 70% 82%);
-  --tag-color-9-bg: hsl(188 28% 25%);
-  --tag-color-9-text: hsl(188 70% 82%);
-  --tag-color-10-bg: hsl(210 28% 25%);
-  --tag-color-10-text: hsl(210 70% 82%);
-  --tag-color-11-bg: hsl(232 28% 25%);
-  --tag-color-11-text: hsl(232 70% 82%);
-  --tag-color-12-bg: hsl(254 28% 25%);
-  --tag-color-12-text: hsl(254 70% 82%);
-  --tag-color-13-bg: hsl(276 28% 25%);
-  --tag-color-13-text: hsl(276 70% 82%);
-  --tag-color-14-bg: hsl(298 28% 25%);
-  --tag-color-14-text: hsl(298 70% 82%);
-  --tag-color-15-bg: hsl(320 28% 25%);
-  --tag-color-15-text: hsl(320 70% 82%);
-  --tag-color-16-bg: hsl(342 28% 25%);
-  --tag-color-16-text: hsl(342 70% 82%);
-  --tag-color-17-bg: hsl(18 28% 25%);
-  --tag-color-17-text: hsl(18 70% 82%);
 }
