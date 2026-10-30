@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
@@ -76,7 +76,7 @@ describe("working board homepage", () => {
     );
     expect(
       screen.getByRole("region", { name: "Активные фильтры" }),
-    ).toHaveTextContent("Метка: Срочно");
+    ).toHaveTextContent("Срочно");
     await waitFor(() =>
       expect(cell).toHaveBeenLastCalledWith(
         a,
@@ -112,7 +112,7 @@ describe("working board homepage", () => {
     );
     expect(
       screen.getByRole("region", { name: "Активные фильтры" }),
-    ).toHaveTextContent("Метка: Деколь");
+    ).toHaveTextContent("Деколь");
     expect(
       screen.getByRole("button", { name: "Фильтровать по метке «Деколь»" }),
     ).toHaveAttribute("aria-pressed", "true");
@@ -121,7 +121,7 @@ describe("working board homepage", () => {
     );
     expect(
       screen.getByRole("region", { name: "Активные фильтры" }),
-    ).toHaveTextContent("Метка: Срочно");
+    ).toHaveTextContent("Срочно");
     await userEvent.click(screen.getByRole("button", { name: "Списки" }));
     await userEvent.click(screen.getByRole("button", { name: "Архив" }));
     await userEvent.type(screen.getByRole("searchbox"), "Заказ{Enter}");
@@ -140,7 +140,7 @@ describe("working board homepage", () => {
     );
     expect(
       screen.getByRole("region", { name: "Активные фильтры" }),
-    ).toHaveTextContent("Поиск: Заказ");
+    ).toHaveTextContent("«Заказ»");
     expect(screen.queryByText("Метка: Срочно")).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Очистить" }));
     expect(
@@ -341,7 +341,13 @@ it("combines avatar and date filters with search and updates the complete column
               asap: false,
               cover: null,
               tags: [],
-              members: [{ id: b, name: "Анна" }],
+              members: [
+                {
+                  id: b,
+                  name: "Анна",
+                  avatarUrl: `/api/v1/users/${b}/avatar?v=${a}`,
+                },
+              ],
             },
           ],
       nextCursor: null,
@@ -362,7 +368,18 @@ it("combines avatar and date filters with search and updates the complete column
   );
   expect(
     screen.getByRole("region", { name: "Активные фильтры" }),
-  ).toHaveTextContent("Пользователь: Анна");
+  ).toHaveTextContent("Анна");
+  const filters = screen.getByRole("region", { name: "Активные фильтры" });
+  expect(filters.querySelector("img")).toHaveAttribute(
+    "src",
+    `/api/v1/users/${b}/avatar?v=${a}`,
+  );
+  await userEvent.click(within(filters).getByText("Анна"));
+  expect(
+    within(filters).getByRole("button", {
+      name: "Убрать фильтр «Пользователь: Анна»",
+    }),
+  ).toBeInTheDocument();
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   await userEvent.click(screen.getByText("Дата"));
   await userEvent.selectOptions(screen.getByLabelText("Поле даты"), "due");
@@ -392,7 +409,7 @@ it("combines avatar and date filters with search and updates the complete column
   );
   expect(
     screen.getByRole("region", { name: "Активные фильтры" }),
-  ).toHaveTextContent("Срок выполнения: с 01.10.2026 по 30.10.2026");
+  ).toHaveTextContent("Срок выполнения01.10.2026 — 30.10.2026");
   await userEvent.click(screen.getByRole("button", { name: "Списки" }));
   await userEvent.type(screen.getByRole("searchbox"), "нет{Enter}");
   await waitFor(() =>

@@ -1,4 +1,9 @@
 const paths = {
+  filter: "M4 5h16M7 12h10M10 19h4M8 3v4M16 10v4M12 17v4",
+  users:
+    "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75",
+  calendar: "M4 5h16v16H4zM16 3v4M8 3v4M4 11h16",
+  tag: "M3 3h8l10 10-8 8L3 11V3zM7 7h.01",
   maximize: "M4 4h16v16H4z",
   restore: "M8 4h12v12M4 8h12v12H4z",
   panel: "M3 4h18v16H3zM15 4v16",

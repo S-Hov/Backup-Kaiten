@@ -157,49 +157,148 @@
 }
 
 .filters {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
   gap: var(--space-12);
-  padding: var(--space-8) var(--space-16);
+  padding: var(--space-10) var(--space-16);
   border-bottom: 1px solid var(--border);
   background: var(--surface);
   flex-shrink: 0;
+  min-width: 0;
   font-size: var(--font-size-12);
 }
 .filterLabel {
-  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  min-height: 32px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.filterCount,
+.groupCount {
+  display: inline-grid;
+  place-items: center;
+  min-width: 19px;
+  height: 19px;
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-round);
+  background: var(--surface-muted);
+  font-size: var(--font-size-11);
+  font-variant-numeric: tabular-nums;
+}
+.filterCount {
+  color: var(--accent-text);
+  background: var(--accent-soft);
+  font-weight: var(--font-weight-semibold);
 }
 .filterItems {
   display: flex;
-  flex: 1;
   flex-wrap: wrap;
-  gap: var(--space-8);
+  align-items: center;
+  gap: var(--space-8) var(--space-12);
   min-width: 0;
+}
+.filterGroup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-6);
+  min-width: 0;
+  max-width: 100%;
+  padding: var(--space-3) var(--space-6);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-subtle);
+}
+.filterGroupLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  min-height: 26px;
+  padding-inline: var(--space-4);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.filterGroupLabel > svg {
+  color: var(--text-muted);
 }
 .filterChip {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-6);
-  padding: var(--space-4) var(--space-8);
-  border-radius: var(--radius-md);
-  color: var(--accent);
-  background: var(--accent-soft);
+  gap: var(--space-4);
+  min-width: 0;
   max-width: 100%;
+  min-height: 26px;
+  padding: 2px var(--space-3) 2px var(--space-8);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-strong);
+  background: var(--surface);
 }
-.filterChip span {
-  overflow-wrap: anywhere;
-  text-align: left;
+.filterValue {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  min-width: 0;
 }
-.filterChip svg {
+.filterValue:has(:global(.avatar)) {
+  margin-left: -4px;
+}
+.filterValue :global(.avatar) {
+  width: 22px;
+  height: 22px;
+  color: var(--accent-text);
+}
+.filterText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 300px;
+  line-height: 1.5;
+}
+.removeFilter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  color: var(--danger);
+}
+.removeFilter:hover {
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 .clearFilters {
-  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: 32px;
   color: var(--text-secondary);
   padding: var(--space-6) var(--space-8);
+  border-radius: var(--radius-md);
+  white-space: nowrap;
 }
 .clearFilters:hover {
-  color: var(--accent);
+  color: var(--accent-text);
+  background: var(--accent-soft);
+}
+@media (max-width: 620px) {
+  .filters {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-6);
+    padding: var(--space-8);
+  }
+  .filterItems {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .filterGroup {
+    width: 100%;
+  }
 }
 
 .dateFilter summary {

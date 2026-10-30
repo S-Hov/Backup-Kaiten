@@ -22,7 +22,11 @@ export function CardCell({
   onOpen?: (id: string) => void;
   onSelectTag?: (tag: { id: string; name: string }) => void;
   filters?: CardFilters;
-  onSelectUser?: (user: { id: string; name: string }) => void;
+  onSelectUser?: (user: {
+    id: string;
+    name: string;
+    avatarUrl?: string | null;
+  }) => void;
   onCount?: (
     columnId: string,
     laneId: string | null,

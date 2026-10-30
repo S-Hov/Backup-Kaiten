@@ -64,7 +64,11 @@ export function BoardCard({
   onOpen?: (card: CardPreview) => void;
   onSelectTag?: (tag: CardPreview["tags"][number]) => void;
   selectedTagIds?: string[];
-  onSelectUser?: (user: { id: string; name: string }) => void;
+  onSelectUser?: (user: {
+    id: string;
+    name: string;
+    avatarUrl?: string | null;
+  }) => void;
   selectedUserIds?: string[];
 }) {
   const content = (

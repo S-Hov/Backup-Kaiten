@@ -77,7 +77,11 @@ function ListColumn({
   filters: CardFilters;
   onOpenCard?: (id: string) => void;
   onSelectTag?: (tag: { id: string; name: string }) => void;
-  onSelectUser?: (user: { id: string; name: string }) => void;
+  onSelectUser?: (user: {
+    id: string;
+    name: string;
+    avatarUrl?: string | null;
+  }) => void;
   onCount?: CountHandler;
   counts?: Counts;
 }) {
@@ -154,7 +158,11 @@ export function KanbanBoard({
   structure: BoardStructure;
   onOpenCard?: (id: string) => void;
   onSelectTag?: (tag: { id: string; name: string }) => void;
-  onSelectUser?: (user: { id: string; name: string }) => void;
+  onSelectUser?: (user: {
+    id: string;
+    name: string;
+    avatarUrl?: string | null;
+  }) => void;
   view?: BoardView;
   filters?: CardFilters;
 }) {

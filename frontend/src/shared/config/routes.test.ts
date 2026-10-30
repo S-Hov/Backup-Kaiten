@@ -41,3 +41,20 @@ it("updates one setting without discarding the others and removes default values
   ).toBe(false);
   expect(previous.get("cardId")).toBe("c");
 });
+
+it("keeps avatar URLs aligned with users without photos when links are reopened", () => {
+  const users = [
+    { id: "one", name: "Без фото" },
+    {
+      id: "two",
+      name: "С фото",
+      avatarUrl: "/api/v1/users/two/avatar?v=version",
+    },
+    { id: "three", name: "Третий" },
+  ];
+  const params = updateBoardParams(new URLSearchParams(), { users });
+  expect(readBoardLocation(params).users).toEqual(users);
+  const remaining = updateBoardParams(params, { users: [users[0], users[2]] });
+  expect(remaining.has("userAvatar")).toBe(false);
+  expect(readBoardLocation(remaining).users).toEqual([users[0], users[2]]);
+});

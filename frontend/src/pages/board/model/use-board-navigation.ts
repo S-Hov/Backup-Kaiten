@@ -50,7 +50,11 @@ export function useBoardNavigation() {
           : [...tags, tag],
       });
     },
-    toggleUser: (user: { id: string; name: string }) => {
+    toggleUser: (user: {
+      id: string;
+      name: string;
+      avatarUrl?: string | null;
+    }) => {
       const users = readBoardLocation(latest.current).users;
       update({
         users: users.some((item) => item.id === user.id)

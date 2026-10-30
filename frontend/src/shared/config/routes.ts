@@ -22,6 +22,7 @@ export const routeParams = {
   tagName: "tagName",
   user: "user",
   userName: "userName",
+  userAvatar: "userAvatar",
   dateField: "dateField",
   dateFrom: "dateFrom",
   dateTo: "dateTo",
@@ -36,7 +37,7 @@ export interface BoardLocation {
   archived: boolean;
   search: string;
   tags: { id: string; name: string }[];
-  users: { id: string; name: string }[];
+  users: { id: string; name: string; avatarUrl?: string | null }[];
   dateField: "created" | "updated" | "due";
   dateFrom: string;
   dateTo: string;
@@ -53,7 +54,13 @@ export function readBoardLocation(params: URLSearchParams): BoardLocation {
           .filter(Boolean)
           .map((id, index) => [
             id,
-            { id, name: params.getAll(routeParams.userName)[index] || id },
+            {
+              id,
+              name: params.getAll(routeParams.userName)[index] || id,
+              ...(params.getAll(routeParams.userAvatar)[index]
+                ? { avatarUrl: params.getAll(routeParams.userAvatar)[index] }
+                : {}),
+            },
           ]),
       ).values(),
     ],
@@ -89,9 +96,13 @@ export function updateBoardParams(
     if (name === "users") {
       params.delete(routeParams.user);
       params.delete(routeParams.userName);
+      params.delete(routeParams.userAvatar);
       for (const user of patch.users || []) {
         params.append(routeParams.user, user.id);
         params.append(routeParams.userName, user.name);
+        if (patch.users?.some((item) => item.avatarUrl)) {
+          params.append(routeParams.userAvatar, user.avatarUrl || "");
+        }
       }
       continue;
     }
