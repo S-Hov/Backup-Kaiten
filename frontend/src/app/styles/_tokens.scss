@@ -77,7 +77,8 @@
 
 // Explicit light is supported alongside the default theme.
 :root,
-:root[data-theme="light"] {
+:root[data-theme="light"],
+[data-theme-preview="light"] {
   color-scheme: light;
   --bg: #f3f4f7;
   --surface: #ffffff;
@@ -115,7 +116,10 @@
   --scrollbar-track: #eef0f4;
 }
 
-:root[data-theme="dark"] {
+:root[data-theme="dark"],
+:root[data-theme="midnight"],
+[data-theme-preview="dark"],
+[data-theme-preview="midnight"] {
   color-scheme: dark;
   --bg: #191b22;
   --surface: #22252f;
@@ -153,8 +157,170 @@
   --scrollbar-track: #252833;
 }
 
+// Warm paper keeps the light layout with softer surfaces and a green accent.
+:root[data-theme="warm"],
+[data-theme-preview="warm"] {
+  color-scheme: light;
+  --bg: #eee9df;
+  --surface: #fffcf5;
+  --surface-subtle: #faf6ed;
+  --surface-muted: #f2ece0;
+  --surface-hover: #e8e2d5;
+  --text: #48473e;
+  --text-strong: #292e26;
+  --text-secondary: #676c5e;
+  --text-muted: #7b7e70;
+  --border: #d9d2c3;
+  --border-subtle: #e9e2d6;
+  --border-strong: #aaa895;
+  --border-accent: #a8bda7;
+  --accent: #427053;
+  --accent-contrast: #ffffff;
+  --accent-hover: #31573f;
+  --accent-soft: #e4eddf;
+  --accent-muted: #a3ba99;
+  --accent-text: #426346;
+  --success: #4b7550;
+  --success-soft: #e5eddf;
+  --warning: #8b692e;
+  --warning-soft: #f8efdb;
+  --danger: #ad4242;
+  --danger-soft: #f9e6de;
+  --info: #507488;
+  --info-soft: #e5edf0;
+  --overlay: #24291fc2;
+  --shadow-color: #39382c20;
+  --focus-color: #42705330;
+  --skeleton: #e3ddcf;
+  --scrollbar-thumb: #c4beae;
+  --scrollbar-track: #eee9df;
+}
+
+// Near-black surfaces retain visible borders and readable secondary text.
+:root[data-theme="midnight"],
+[data-theme-preview="midnight"] {
+  --bg: #000000;
+  --surface: #0b0c0f;
+  --surface-subtle: #101114;
+  --surface-muted: #15161a;
+  --surface-hover: #202126;
+  --text: #d9dadd;
+  --text-strong: #f5f5f6;
+  --text-secondary: #b0b2ba;
+  --text-muted: #91949e;
+  --border: #2b2d34;
+  --border-subtle: #202228;
+  --border-strong: #555965;
+  --border-accent: #6a4d7c;
+  --accent: #d29ce8;
+  --accent-contrast: #08080a;
+  --accent-hover: #e6bbf5;
+  --accent-soft: #24162c;
+  --accent-muted: #8f6a9f;
+  --accent-text: #dbb6ec;
+  --success: #99c7a2;
+  --success-soft: #12271a;
+  --warning: #d8bb87;
+  --warning-soft: #2c2211;
+  --danger: #ef98a6;
+  --danger-soft: #30151e;
+  --info: #9cbeda;
+  --info-soft: #122331;
+  --overlay: #000000e6;
+  --shadow-color: #000000b3;
+  --focus-color: #d29ce850;
+  --skeleton: #22242b;
+  --scrollbar-thumb: #454853;
+  --scrollbar-track: #0b0c0f;
+}
+
+// A neutral light palette, including statuses and tag colors.
+:root[data-theme="monochrome"],
+[data-theme-preview="monochrome"] {
+  color-scheme: light;
+  --bg: #f2f2f2;
+  --surface: #ffffff;
+  --surface-subtle: #fafafa;
+  --surface-muted: #ededed;
+  --surface-hover: #e5e5e5;
+  --text: #262626;
+  --text-strong: #000000;
+  --text-secondary: #525252;
+  --text-muted: #707070;
+  --text-inverse: #ffffff;
+  --border: #cccccc;
+  --border-subtle: #e0e0e0;
+  --border-strong: #808080;
+  --border-accent: #525252;
+  --accent: #171717;
+  --accent-contrast: #ffffff;
+  --accent-hover: #404040;
+  --accent-soft: #e8e8e8;
+  --accent-muted: #a3a3a3;
+  --accent-text: #262626;
+  --success: #404040;
+  --success-soft: #ededed;
+  --warning: #404040;
+  --warning-soft: #e8e8e8;
+  --danger: #171717;
+  --danger-soft: #e0e0e0;
+  --info: #525252;
+  --info-soft: #f0f0f0;
+  --overlay: #000000b8;
+  --shadow-color: #00000020;
+  --focus-color: #17171730;
+  --skeleton: #dedede;
+  --scrollbar-thumb: #a3a3a3;
+  --scrollbar-track: #ededed;
+  @for $i from 1 through 17 {
+    --tag-color-#{$i}-bg: #e8e8e8;
+    --tag-color-#{$i}-text: #262626;
+  }
+}
+
+// GitHub Dark-inspired canvas, neutral surfaces and blue accents.
+:root[data-theme="github"],
+[data-theme-preview="github"] {
+  color-scheme: dark;
+  --bg: #0d1117;
+  --surface: #151b23;
+  --surface-subtle: #161b22;
+  --surface-muted: #212830;
+  --surface-hover: #262c36;
+  --text: #d1d9e0;
+  --text-strong: #f0f6fc;
+  --text-secondary: #b1bac4;
+  --text-muted: #9198a1;
+  --text-inverse: #ffffff;
+  --border: #3d444d;
+  --border-subtle: #2a313c;
+  --border-strong: #59636e;
+  --border-accent: #1f6feb;
+  --accent: #4493f8;
+  --accent-contrast: #0d1117;
+  --accent-hover: #79c0ff;
+  --accent-soft: #388bfd1a;
+  --accent-muted: #1f6feb;
+  --accent-text: #58a6ff;
+  --success: #3fb950;
+  --success-soft: #23863626;
+  --warning: #d29922;
+  --warning-soft: #9e6a0326;
+  --danger: #f85149;
+  --danger-soft: #f851491a;
+  --info: #58a6ff;
+  --info-soft: #388bfd1a;
+  --overlay: #010409cc;
+  --shadow-color: #01040980;
+  --focus-color: #1f6feb66;
+  --skeleton: #262c36;
+  --scrollbar-thumb: #484f58;
+  --scrollbar-track: #0d1117;
+}
+
 :root,
-:root[data-theme="light"] {
+:root[data-theme="light"],
+[data-theme-preview="light"] {
   --tag-color-1-bg: hsl(4 65% 91%);
   --tag-color-1-text: hsl(4 50% 29%);
   --tag-color-2-bg: hsl(24 65% 91%);
@@ -191,7 +357,12 @@
   --tag-color-17-text: hsl(18 50% 29%);
 }
 
-:root[data-theme="dark"] {
+:root[data-theme="github"],
+[data-theme-preview="github"],
+:root[data-theme="dark"],
+:root[data-theme="midnight"],
+[data-theme-preview="dark"],
+[data-theme-preview="midnight"] {
   --tag-color-1-bg: hsl(4 28% 25%);
   --tag-color-1-text: hsl(4 70% 82%);
   --tag-color-2-bg: hsl(24 28% 25%);

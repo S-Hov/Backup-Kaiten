@@ -3,15 +3,15 @@ import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authApi, useSession } from "@/entities/session";
 import { routePaths } from "@/shared/config";
-import { setTheme, type Theme } from "@/shared/lib/theme";
+import { isTheme, setTheme, themes, type Theme } from "@/shared/lib/theme";
 import styles from "./AccountMenu.module.scss";
 
 export function AccountMenu() {
-  const [theme, updateTheme] = useState<Theme>(() =>
-    document.documentElement.dataset.theme === "dark" ? "dark" : "light",
-  );
-  function toggleTheme() {
-    const next = theme === "dark" ? "light" : "dark";
+  const [theme, updateTheme] = useState<Theme>(() => {
+    const current = document.documentElement.dataset.theme;
+    return isTheme(current) ? current : "light";
+  });
+  function selectTheme(next: Theme) {
     setTheme(next);
     updateTheme(next);
   }
@@ -61,9 +61,39 @@ export function AccountMenu() {
         {user.role === "admin" && (
           <Link to={routePaths.users}>Пользователи</Link>
         )}
-        <button type="button" onClick={toggleTheme}>
-          {theme === "dark" ? "Включить светлую тему" : "Включить тёмную тему"}
-        </button>
+        <fieldset className={styles.themePicker}>
+          <legend>Оформление</legend>
+          <div className={styles.themeOptions}>
+            {themes.map(({ id, label }) => (
+              <label className={styles.themeOption} key={id}>
+                <input
+                  type="radio"
+                  name="account-theme"
+                  value={id}
+                  checked={theme === id}
+                  onChange={() => selectTheme(id)}
+                />
+                <span className={styles.themeTile}>
+                  <span
+                    className={styles.themePreview}
+                    data-theme-preview={id}
+                    aria-hidden="true"
+                  >
+                    <span className={styles.previewSidebar} />
+                    <span className={styles.previewCard} />
+                    <span className={styles.previewCard} />
+                  </span>
+                  <span className={styles.themeLabel}>
+                    {label}
+                    <span className={styles.themeCheck} aria-hidden="true">
+                      ✓
+                    </span>
+                  </span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
         <button
           type="button"
           className={styles.logout}

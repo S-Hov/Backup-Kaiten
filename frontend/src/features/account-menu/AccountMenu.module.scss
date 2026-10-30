@@ -34,7 +34,9 @@
   position: absolute;
   right: 0;
   top: calc(100% + var(--space-12));
-  width: 240px;
+  width: min(288px, calc(100vw - var(--space-32)));
+  max-height: calc(100dvh - 100px);
+  overflow-y: auto;
   padding: var(--space-16);
   display: flex;
   flex-direction: column;
@@ -55,6 +57,92 @@
 }
 .popup .logout {
   color: var(--danger);
+}
+.themePicker {
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-12) 0;
+  border: 0;
+  border-block: 1px solid var(--border-subtle);
+}
+.themePicker legend {
+  padding: 0 var(--space-6) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-11);
+  font-weight: var(--font-weight-semibold);
+}
+.themeOptions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-8);
+}
+.themeOption {
+  position: relative;
+  cursor: pointer;
+}
+.themeOption input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.themeTile {
+  display: block;
+  padding: var(--space-6);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  transition:
+    border-color var(--duration-fast),
+    background var(--duration-fast);
+}
+.themeOption:hover .themeTile {
+  border-color: var(--border-strong);
+  background: var(--surface-hover);
+}
+.themeOption input:checked + .themeTile {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.themeOption input:focus-visible + .themeTile {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.themePreview {
+  display: grid;
+  grid-template-columns: 18px 1fr 1fr;
+  gap: var(--space-5);
+  height: 44px;
+  padding: var(--space-6);
+  overflow: hidden;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.previewSidebar {
+  border-radius: var(--radius-xs);
+  background: var(--accent-soft);
+  border-top: 3px solid var(--accent);
+}
+.previewCard {
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.themeLabel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-6) var(--space-2) 0;
+  color: var(--text);
+  font-size: var(--font-size-11);
+}
+.themeCheck {
+  color: var(--accent);
+  visibility: hidden;
+}
+.themeOption input:checked + .themeTile .themeCheck {
+  visibility: visible;
 }
 @media (max-width: 900px) {
   .menu summary div {
