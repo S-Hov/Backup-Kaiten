@@ -72,6 +72,31 @@ class AuthTests(unittest.TestCase):
         self.client.cookies.set('board_session', cookie)
         self.assertEqual(self.client.get('/api/v1/auth/me').status_code, 401)
 
+    def test_modified_token_cannot_set_or_reset_password_or_revoke_sessions(self):
+        invite = self.auth.invite('admin@example.test', 'admin')
+        token = invite['token']
+        altered = ('A' if token[0] != 'A' else 'B') + token[1:]
+        response = self.client.post('/api/v1/auth/activate', json={'token': altered, 'password': PASSWORD})
+        self.assertEqual(response.status_code, 400, response.text)
+        with Session(self.engine) as session:
+            account = session.scalar(select(Account))
+            self.assertIsNone(account.password_hash)
+            self.assertFalse(account.active)
+            self.assertIsNone(session.scalar(select(AccessToken)).used_at)
+        self.assertEqual(self.client.post('/api/v1/auth/activate', json={'token': token, 'password': PASSWORD}).status_code, 200)
+        self.login()
+        reset = self.auth.invite('admin@example.test', 'admin')
+        with Session(self.engine) as session:
+            before = session.scalar(select(Account)).password_hash
+        bad = reset['token'][:-1] + ('A' if reset['token'][-1] != 'A' else 'B')
+        response = self.client.post('/api/v1/auth/activate', json={'token': bad, 'password': 'Another-test-password-123'})
+        self.assertEqual(response.status_code, 400)
+        with Session(self.engine) as session:
+            self.assertEqual(session.scalar(select(Account)).password_hash, before)
+            self.assertIsNone(session.scalar(select(AccessToken).where(AccessToken.used_at.is_(None))).used_at)
+            self.assertIsNone(session.scalar(select(LoginSession)).revoked_at)
+        self.assertEqual(self.client.get('/api/v1/auth/me').status_code, 200)
+
     def test_csrf_origin_and_viewer_permissions(self):
         self.activate(role='viewer'); self.login()
         self.assertEqual(self.client.get('/api/v1/boards').status_code, 200)

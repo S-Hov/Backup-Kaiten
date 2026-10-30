@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Link,
@@ -90,9 +90,34 @@ export function LoginPage() {
 
 export function ActivatePage() {
   const location = useLocation();
-  const [token] = useState(
-    () => new URLSearchParams(location.hash.slice(1)).get("token") || "",
-  );
+  const tokens = new URLSearchParams(location.hash.slice(1)).getAll("token");
+  const token = tokens.length === 1 ? tokens[0] : "";
+  if (!location.hash && location.state?.passwordSet === true) {
+    return (
+      <main className={styles.page}>
+        <div className={styles.form}>
+          <span className={styles.brand}>Гекса-А · Заказы</span>
+          <h1>Пароль установлен</h1>
+          <p>Теперь можно войти со своей почтой и новым паролем.</p>
+          <Link to={routePaths.login}>Перейти ко входу</Link>
+        </div>
+      </main>
+    );
+  }
+  // A different fragment is a different credential flow: never retain an old
+  // token, draft, error or successful mutation when the address changes.
+  return <ActivationForm key={location.hash} token={token} />;
+}
+
+function ActivationForm({ token }: { token: string }) {
+  const navigate = useNavigate();
+  const mounted = useRef(false);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   const [password, setPassword] = useState("");
   const [repeat, setRepeat] = useState("");
   const [error, setError] = useState("");
@@ -101,9 +126,13 @@ export function ActivatePage() {
     mutationFn: () => authApi.activate(token, password),
     retry: false,
     onSuccess: () => {
+      if (!mounted.current) return;
       setPassword("");
       setRepeat("");
-      window.history.replaceState(null, "", routePaths.activate);
+      navigate(routePaths.activate, {
+        replace: true,
+        state: { passwordSet: true },
+      });
     },
   });
   return (
@@ -112,6 +141,7 @@ export function ActivatePage() {
         className={styles.form}
         onSubmit={(e) => {
           e.preventDefault();
+          if (!token || activation.isPending) return;
           if (password !== repeat) {
             setError("Пароли не совпадают");
             return;
@@ -120,18 +150,11 @@ export function ActivatePage() {
         }}
       >
         <span className={styles.brand}>Гекса-А · Заказы</span>
-        <h1>
-          {activation.isSuccess ? "Пароль установлен" : "Установка пароля"}
-        </h1>
-        {activation.isSuccess ? (
-          <>
-            <p>Теперь можно войти со своей почтой и новым паролем.</p>
-            <Link to={routePaths.login}>Перейти ко входу</Link>
-          </>
-        ) : !token ? (
+        <h1>Установка пароля</h1>
+        {!token ? (
           <p role="alert">
-            В ссылке нет кода. Откройте полную ссылку, полученную от
-            администратора.
+            Ссылка установки пароля некорректна. Откройте полную ссылку,
+            полученную от администратора.
           </p>
         ) : (
           <>
