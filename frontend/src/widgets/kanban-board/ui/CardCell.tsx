@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { BoardCard, cardQueries } from "@/entities/card";
 import type { CardFilters } from "@/entities/card";
@@ -10,6 +11,8 @@ export function CardCell({
   label,
   onOpen,
   onSelectTag,
+  onSelectUser,
+  onCount,
   filters = {},
 }: {
   boardId: string;
@@ -19,10 +22,20 @@ export function CardCell({
   onOpen?: (id: string) => void;
   onSelectTag?: (tag: { id: string; name: string }) => void;
   filters?: CardFilters;
+  onSelectUser?: (user: { id: string; name: string }) => void;
+  onCount?: (
+    columnId: string,
+    laneId: string | null,
+    total: number | undefined,
+  ) => void;
 }) {
   const cards = useInfiniteQuery(
     cardQueries.cell(boardId, columnId, laneId, filters),
   );
+  const total = cards.data?.pages[0]?.total;
+  useEffect(() => {
+    onCount?.(columnId, laneId, total);
+  }, [onCount, columnId, laneId, total]);
   const items = cards.data?.pages.flatMap((page) => page.items) ?? [];
   // When a page changes after a future live update, never render a duplicate ID.
   const unique = [...new Map(items.map((card) => [card.id, card])).values()];
@@ -43,13 +56,19 @@ export function CardCell({
               key={card.id}
               card={card}
               onSelectTag={onSelectTag}
+              onSelectUser={onSelectUser}
+              selectedUserIds={filters.users}
               selectedTagIds={filters.tags}
               onOpen={onOpen ? (card) => onOpen(card.id) : undefined}
             />
           ))}
           {!unique.length && !cards.error && (
             <p className={styles.cellMessage}>
-              {filters.search || filters.tags?.length
+              {filters.search ||
+              filters.tags?.length ||
+              filters.users?.length ||
+              filters.dateFrom ||
+              filters.dateTo
                 ? "Ничего не найдено"
                 : "Нет карточек"}
             </p>

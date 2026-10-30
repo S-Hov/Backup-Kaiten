@@ -27,6 +27,11 @@ export const cardQueries = {
         !!filters.archived,
         filters.search || "",
         [...(filters.tags || [])].sort(),
+        [...(filters.users || [])].sort(),
+        filters.dateField || "created",
+        filters.dateFrom || "",
+        filters.dateTo || "",
+        new Date().getTimezoneOffset(),
       ],
       initialPageParam: null as string | null,
       queryFn: ({ signal, pageParam }) =>

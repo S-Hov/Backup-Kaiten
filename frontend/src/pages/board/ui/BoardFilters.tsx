@@ -5,17 +5,56 @@ export function BoardFilters({
   search,
   tags,
   archived,
+  users,
+  dateField,
+  dateFrom,
+  dateTo,
   onRemove,
   onClear,
 }: {
   search: string;
   tags: { id: string; name: string }[];
   archived: boolean;
-  onRemove: (filter: "search" | "tag" | "archived", tagId?: string) => void;
+  users: { id: string; name: string }[];
+  dateField: "created" | "updated" | "due";
+  dateFrom: string;
+  dateTo: string;
+  onRemove: (
+    filter: "search" | "tag" | "archived" | "user" | "date",
+    tagId?: string,
+  ) => void;
   onClear: () => void;
 }) {
-  if (!search && !tags.length && !archived) return null;
+  if (
+    !search &&
+    !tags.length &&
+    !archived &&
+    !users.length &&
+    !dateFrom &&
+    !dateTo
+  )
+    return null;
+  const dateLabel = {
+    created: "Дата создания",
+    updated: "Дата обновления",
+    due: "Срок выполнения",
+  }[dateField];
+  const formatDate = (value: string) => value.split("-").reverse().join(".");
   const items = [
+    ...users.map((user) => ({
+      key: "user" as const,
+      id: user.id,
+      label: `Пользователь: ${user.name}`,
+    })),
+    ...(dateFrom || dateTo
+      ? [
+          {
+            key: "date" as const,
+            id: "date",
+            label: `${dateLabel}: ${dateFrom ? `с ${formatDate(dateFrom)}` : ""}${dateFrom && dateTo ? " " : ""}${dateTo ? `по ${formatDate(dateTo)}` : ""}`,
+          },
+        ]
+      : []),
     ...tags.map((tag) => ({
       key: "tag" as const,
       id: tag.id,

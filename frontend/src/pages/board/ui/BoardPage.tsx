@@ -86,6 +86,10 @@ export function BoardPage() {
           onSearch={(search) => nav.update({ search }, true)}
         />
         <BoardToolbar
+          dateField={nav.dateField}
+          dateFrom={nav.dateFrom}
+          dateTo={nav.dateTo}
+          onDate={(patch) => nav.update(patch)}
           view={nav.view}
           archived={nav.archived}
           onView={(view) => nav.update({ view })}
@@ -96,20 +100,35 @@ export function BoardPage() {
         <BoardFilters
           search={nav.search}
           tags={nav.tags}
+          users={nav.users}
+          dateField={nav.dateField}
+          dateFrom={nav.dateFrom}
+          dateTo={nav.dateTo}
           archived={nav.archived}
           onRemove={(filter, tagId) => {
             if (filter === "search") setFilterReset((value) => value + 1);
             nav.update(
-              filter === "tag"
-                ? { tags: nav.tags.filter((tag) => tag.id !== tagId) }
-                : filter === "search"
-                  ? { search: "" }
-                  : { archived: false },
+              filter === "date"
+                ? { dateFrom: "", dateTo: "" }
+                : filter === "user"
+                  ? { users: nav.users.filter((user) => user.id !== tagId) }
+                  : filter === "tag"
+                    ? { tags: nav.tags.filter((tag) => tag.id !== tagId) }
+                    : filter === "search"
+                      ? { search: "" }
+                      : { archived: false },
             );
           }}
           onClear={() => {
             setFilterReset((value) => value + 1);
-            nav.update({ search: "", tags: [], archived: false });
+            nav.update({
+              search: "",
+              tags: [],
+              users: [],
+              dateFrom: "",
+              dateTo: "",
+              archived: false,
+            });
           }}
         />
         <main className={styles.workspace} aria-label="Рабочая доска">
@@ -140,8 +159,19 @@ export function BoardPage() {
                   archived: nav.archived,
                   search: nav.search,
                   tags: nav.tags.map((tag) => tag.id),
+                  ...(nav.users.length
+                    ? { users: nav.users.map((user) => user.id) }
+                    : {}),
+                  ...(nav.dateFrom || nav.dateTo
+                    ? {
+                        dateField: nav.dateField,
+                        dateFrom: nav.dateFrom,
+                        dateTo: nav.dateTo,
+                      }
+                    : {}),
                 }}
                 onSelectTag={(tag) => nav.toggleTag(tag)}
+                onSelectUser={nav.toggleUser}
                 onOpenCard={nav.openCard}
               />
             )
@@ -169,6 +199,9 @@ export function BoardPage() {
                 search: "",
                 archived: false,
                 tags: [],
+                users: [],
+                dateFrom: "",
+                dateTo: "",
               });
             }}
           />

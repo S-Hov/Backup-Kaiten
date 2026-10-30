@@ -57,11 +57,15 @@ export function BoardCard({
   onOpen,
   onSelectTag,
   selectedTagIds,
+  onSelectUser,
+  selectedUserIds = [],
 }: {
   card: CardPreview;
   onOpen?: (card: CardPreview) => void;
   onSelectTag?: (tag: CardPreview["tags"][number]) => void;
   selectedTagIds?: string[];
+  onSelectUser?: (user: { id: string; name: string }) => void;
+  selectedUserIds?: string[];
 }) {
   const content = (
     <>
@@ -84,13 +88,25 @@ export function BoardCard({
           {card.asap && <span className={styles.urgent}>Срочно</span>}
           {!!card.members?.length && (
             <div className={styles.members} aria-label="Участники">
-              {card.members.slice(0, 5).map((member) => (
-                <Avatar
-                  key={member.id}
-                  label={member.name}
-                  src={member.avatarUrl}
-                />
-              ))}
+              {card.members.slice(0, 5).map((member) =>
+                onSelectUser ? (
+                  <button
+                    key={member.id}
+                    className={styles.memberButton}
+                    onClick={() => onSelectUser(member)}
+                    aria-label={`Фильтровать по пользователю «${member.name}»`}
+                    aria-pressed={selectedUserIds.includes(member.id)}
+                  >
+                    <Avatar label={member.name} src={member.avatarUrl} />
+                  </button>
+                ) : (
+                  <Avatar
+                    key={member.id}
+                    label={member.name}
+                    src={member.avatarUrl}
+                  />
+                ),
+              )}
               {card.members.length > 5 && (
                 <span>+{card.members.length - 5}</span>
               )}

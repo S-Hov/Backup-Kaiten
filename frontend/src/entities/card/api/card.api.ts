@@ -6,6 +6,10 @@ export interface CardFilters {
   archived?: boolean;
   search?: string;
   tags?: string[];
+  users?: string[];
+  dateField?: "created" | "updated" | "due";
+  dateFrom?: string;
+  dateTo?: string;
 }
 export interface NewCard {
   requestId: string;
@@ -51,6 +55,15 @@ export const cardApi = {
         ...(filters.archived ? { archived: "true" } : {}),
         ...(filters.search ? { q: filters.search } : {}),
         ...(filters.tags?.length ? { tag_id: filters.tags } : {}),
+        ...(filters.users?.length ? { user_id: filters.users } : {}),
+        ...(filters.dateFrom || filters.dateTo
+          ? {
+              date_field: filters.dateField || "created",
+              ...(filters.dateFrom ? { date_from: filters.dateFrom } : {}),
+              ...(filters.dateTo ? { date_to: filters.dateTo } : {}),
+              timezone_offset: new Date().getTimezoneOffset(),
+            }
+          : {}),
       },
     }),
   create: (boardId: string, body: NewCard) =>

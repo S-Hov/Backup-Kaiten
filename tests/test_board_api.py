@@ -137,6 +137,34 @@ class BoardApiTests(unittest.TestCase):
         self.assertEqual(self.client.get(f'/api/v1/boards/{self.other_board}/cards',
             params={'column_id': str(self.second)}).status_code, 404)
 
+    def test_counts_and_user_date_filters_apply_before_pagination(self):
+        first, second, lane = self.seed_cards()
+        with Session(self.engine) as session, session.begin():
+            user = models.User(id=uuid4(), full_name='Анна')
+            other = models.User(id=uuid4(), full_name='Иван')
+            session.add_all([user, other]); session.flush()
+            user_id, other_id = user.id, other.id
+            session.add_all([models.CardMember(card_id=first, user_id=user.id, role='member'),
+                             models.CardMember(card_id=second, user_id=user.id, role='member'),
+                             models.CardMember(card_id=first, user_id=other.id, role='member')])
+            session.get(Card, first).due_date = datetime(2026, 10, 30, 20, 59, 59, 999999, tzinfo=timezone.utc)
+            session.get(Card, second).due_date = datetime(2026, 10, 30, 21, 0, tzinfo=timezone.utc)
+        page = self.card_page(lane, limit=1, user_id=str(user_id)).json()
+        self.assertEqual(page['total'], 2)
+        self.assertEqual(self.card_page(lane, limit=1, user_id=str(user_id), cursor=page['nextCursor']).json()['total'], 2)
+        params = dict(user_id=str(user_id), date_field='due', date_from='2026-10-30', date_to='2026-10-30', timezone_offset=-180)
+        result = self.card_page(lane, **params).json()
+        self.assertEqual(result['total'], 1)
+        self.assertEqual([card['id'] for card in result['items']], [str(first)])
+        self.assertEqual(self.card_page(lane, **params, q='Второй').json()['total'], 0)
+        self.assertEqual(self.card_page(lane, user_id=[str(user_id), str(other_id)]).json()['total'], 1)
+        self.assertEqual(self.card_page(lane, user_id=str(uuid4())).json()['total'], 0)
+        self.assertEqual(self.card_page(lane, user_id='invalid').status_code, 422)
+        self.assertEqual(self.card_page(lane, date_field='invalid').status_code, 422)
+        self.assertEqual(self.card_page(lane, date_from='2026-11-01', date_to='2026-10-01').status_code, 422)
+        self.assertEqual(self.card_page(lane, date_from='2026-02-30').status_code, 422)
+        self.assertEqual(self.card_page(lane, date_to='2026-10-30', date_field='due').json()['total'], 2)
+
     def add_image(self, session, card_id, key, **kwargs):
         obj = FileObject(id=uuid4(), storage_key=key, size=4, mime_type=kwargs.pop('mime', 'image/png'))
         attachment = Attachment(id=uuid4(), card_id=card_id, name='Макет', file_object_id=obj.id, status='saved', **kwargs)
@@ -181,7 +209,7 @@ class BoardApiTests(unittest.TestCase):
         try:
             response = self.card_page(lane)
             self.assertEqual(response.status_code, 200)
-            self.assertEqual(len(statements), 6)  # Batched participant/portrait projection adds one query.
+            self.assertEqual(len(statements), 7)  # Batched previews plus the complete filtered count.
             self.assertFalse(any('source_data' in sql or 'cards.description' in sql or 'archive_' in sql for sql in statements))
             self.assertNotIn('storageKey', response.text)
         finally:

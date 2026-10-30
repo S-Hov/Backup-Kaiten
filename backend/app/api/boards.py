@@ -1,5 +1,6 @@
 from typing import Annotated
-from typing import Any
+from typing import Any, Literal
+from datetime import date
 from uuid import UUID
 from fastapi import APIRouter, Depends, Request, Query, HTTPException
 from pydantic import BaseModel, StringConstraints, Field, ValidationError
@@ -66,6 +67,7 @@ class CardPreview(BaseModel):
 class CardPage(BaseModel):
     items: list[CardPreview]
     nextCursor: str | None
+    total: int
 
 
 class CreateCard(BaseModel):
@@ -139,8 +141,14 @@ def structure(board_id: UUID, service: Service):
 def cards(board_id: UUID, column_id: UUID, service: Service, lane_id: UUID | None = None,
           limit: Annotated[int, Query(ge=1, le=100)] = 30,
           cursor: Annotated[str | None, Query(max_length=400)] = None,
-          archived: bool = False, q: Annotated[str, Query(max_length=200)] = '', tag_id: Annotated[list[UUID] | None, Query()] = None):
-    return service.cards(board_id, column_id, lane_id, limit, cursor, archived, q, tag_id)
+          archived: bool = False, q: Annotated[str, Query(max_length=200)] = '', tag_id: Annotated[list[UUID] | None, Query()] = None,
+          user_id: Annotated[list[UUID] | None, Query()] = None,
+          date_field: Literal['created', 'updated', 'due'] = 'created',
+          date_from: date | None = None, date_to: date | None = None,
+          timezone_offset: Annotated[int, Query(ge=-840, le=840)] = 0):
+    if date_from and date_to and date_from > date_to:
+        raise HTTPException(422, 'Начало периода должно быть не позже окончания')
+    return service.cards(board_id, column_id, lane_id, limit, cursor, archived, q, tag_id, user_id, date_field, date_from, date_to, timezone_offset)
 
 
 @router.post('/{board_id}/cards', response_model=CreatedCard, status_code=201)

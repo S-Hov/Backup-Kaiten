@@ -20,6 +20,11 @@ export const routeParams = {
   search: "q",
   tag: "tag",
   tagName: "tagName",
+  user: "user",
+  userName: "userName",
+  dateField: "dateField",
+  dateFrom: "dateFrom",
+  dateTo: "dateTo",
   legacySnapshot: "snapshot",
   legacyCard: "card",
 } as const;
@@ -31,12 +36,35 @@ export interface BoardLocation {
   archived: boolean;
   search: string;
   tags: { id: string; name: string }[];
+  users: { id: string; name: string }[];
+  dateField: "created" | "updated" | "due";
+  dateFrom: string;
+  dateTo: string;
 }
 export function readBoardLocation(params: URLSearchParams): BoardLocation {
   return {
     board: params.get(routeParams.board) || "",
     card: params.get(routeParams.card) || "",
     view: params.get(routeParams.view) === "lists" ? "lists" : "board",
+    users: [
+      ...new Map(
+        params
+          .getAll(routeParams.user)
+          .filter(Boolean)
+          .map((id, index) => [
+            id,
+            { id, name: params.getAll(routeParams.userName)[index] || id },
+          ]),
+      ).values(),
+    ],
+    dateField:
+      params.get(routeParams.dateField) === "due"
+        ? "due"
+        : params.get(routeParams.dateField) === "updated"
+          ? "updated"
+          : "created",
+    dateFrom: params.get(routeParams.dateFrom) || "",
+    dateTo: params.get(routeParams.dateTo) || "",
     archived: params.get(routeParams.archived) === "1",
     search: params.get(routeParams.search) || "",
     tags: [
@@ -58,6 +86,15 @@ export function updateBoardParams(
 ) {
   const params = new URLSearchParams(previous);
   for (const name of Object.keys(patch) as (keyof BoardLocation)[]) {
+    if (name === "users") {
+      params.delete(routeParams.user);
+      params.delete(routeParams.userName);
+      for (const user of patch.users || []) {
+        params.append(routeParams.user, user.id);
+        params.append(routeParams.userName, user.name);
+      }
+      continue;
+    }
     if (name === "tags") {
       params.delete(routeParams.tag);
       params.delete(routeParams.tagName);

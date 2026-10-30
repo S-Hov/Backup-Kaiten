@@ -9,6 +9,10 @@ export function BoardToolbar({
   onArchive,
   onAdd,
   canAdd,
+  dateField,
+  dateFrom,
+  dateTo,
+  onDate,
 }: {
   view: BoardView;
   archived: boolean;
@@ -16,6 +20,14 @@ export function BoardToolbar({
   onArchive: () => void;
   onAdd: () => void;
   canAdd: boolean;
+  dateField: "created" | "updated" | "due";
+  dateFrom: string;
+  dateTo: string;
+  onDate: (patch: {
+    dateField: "created" | "updated" | "due";
+    dateFrom: string;
+    dateTo: string;
+  }) => void;
 }) {
   return (
     <div className={styles.toolbar} aria-label="Управление доской">
@@ -38,6 +50,65 @@ export function BoardToolbar({
         <Icon name="archive" size={17} />
         <span>Архив</span>
       </button>
+      <details className={styles.dateFilter}>
+        <summary>Дата{dateFrom || dateTo ? " •" : ""}</summary>
+        <form
+          key={`${dateField}:${dateFrom}:${dateTo}`}
+          onSubmit={(event) => {
+            event.preventDefault();
+            const form = event.currentTarget;
+            const data = new FormData(form);
+            const from = String(data.get("from") || "");
+            const to = String(data.get("to") || "");
+            const input = form.elements.namedItem("to") as HTMLInputElement;
+            input.setCustomValidity(
+              from && to && from > to
+                ? "Начало периода должно быть не позже окончания"
+                : "",
+            );
+            if (!form.reportValidity()) return;
+            onDate({
+              dateField: data.get("field") as "created" | "updated" | "due",
+              dateFrom: from,
+              dateTo: to,
+            });
+            form.closest("details")?.removeAttribute("open");
+          }}
+        >
+          <label>
+            Поле даты
+            <select name="field" defaultValue={dateField}>
+              <option value="created">Дата создания</option>
+              <option value="updated">Дата обновления</option>
+              <option value="due">Срок выполнения</option>
+            </select>
+          </label>
+          <label>
+            С
+            <input
+              type="date"
+              name="from"
+              defaultValue={dateFrom}
+              onChange={(event) => {
+                const input = event.currentTarget.form?.elements.namedItem(
+                  "to",
+                ) as HTMLInputElement;
+                input?.setCustomValidity("");
+              }}
+            />
+          </label>
+          <label>
+            По
+            <input
+              type="date"
+              name="to"
+              defaultValue={dateTo}
+              onChange={(event) => event.currentTarget.setCustomValidity("")}
+            />
+          </label>
+          <button type="submit">Применить</button>
+        </form>
+      </details>
       <button className={styles.add} disabled={!canAdd} onClick={onAdd}>
         <Icon name="plus" size={17} />
         Добавить

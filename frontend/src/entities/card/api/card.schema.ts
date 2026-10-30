@@ -37,5 +37,6 @@ export const cardPreviewSchema = z.looseObject({
 export const cardPageSchema = z.looseObject({
   items: z.array(cardPreviewSchema),
   nextCursor: z.string().nullable(),
+  total: z.number().int().nonnegative().optional(),
 });
 export type CardPreview = z.infer<typeof cardPreviewSchema>;

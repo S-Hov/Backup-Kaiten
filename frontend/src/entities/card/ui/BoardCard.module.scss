@@ -96,3 +96,16 @@
   align-items: center;
   margin-left: auto;
 }
+
+.memberButton {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  padding: 0;
+  border-radius: 50%;
+}
+.memberButton:hover,
+.memberButton[aria-pressed="true"] {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}

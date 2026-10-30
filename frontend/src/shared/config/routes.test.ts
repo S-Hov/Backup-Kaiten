@@ -8,6 +8,10 @@ it("round-trips board view, search, archive and card IDs with encoded query char
     view: "lists" as const,
     archived: true,
     search: "Чай & кофе",
+    users: [{ id: "user-id", name: "Анна & Иван" }],
+    dateField: "due" as const,
+    dateFrom: "2026-10-01",
+    dateTo: "2026-10-30",
     tags: [
       { id: "tag-id", name: "! Срочно !" },
       { id: "tag-2", name: "Печать" },

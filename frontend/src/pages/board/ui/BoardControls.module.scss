@@ -201,3 +201,45 @@
 .clearFilters:hover {
   color: var(--accent);
 }
+
+.dateFilter summary {
+  cursor: pointer;
+  padding: var(--space-8) var(--space-10);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+  font-size: var(--font-size-12);
+  white-space: nowrap;
+}
+.dateFilter form {
+  position: fixed;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-12);
+  align-items: end;
+  max-width: calc(100vw - 32px);
+  left: 16px;
+  margin-top: var(--space-8);
+  padding: var(--space-16);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+.dateFilter label {
+  display: grid;
+  gap: var(--space-6);
+  font-size: var(--font-size-12);
+}
+.dateFilter input,
+.dateFilter select {
+  padding: var(--space-6);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+}
+.dateFilter button {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}

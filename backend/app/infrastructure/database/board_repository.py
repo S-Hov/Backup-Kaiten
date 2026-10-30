@@ -1,4 +1,5 @@
 """Thin working-board projections: structure, paged card previews and image metadata."""
+from datetime import datetime, time, timedelta, timezone
 import base64
 import json
 import re
@@ -60,7 +61,7 @@ class SqlBoardRepository:
                  'sortOrder': str(row['sort_order']), 'type': row['type'], 'wipLimit': row['wip_limit']} for row in columns],
                 'lanes': [{'id': row['id'], 'title': row['title'], 'sortOrder': str(row['sort_order'])} for row in lanes]}
 
-    def cards(self, board_id, column_id, lane_id, limit=30, cursor=None, archived=False, query='', tag_id=None):
+    def cards(self, board_id, column_id, lane_id, limit=30, cursor=None, archived=False, query='', tag_id=None, user_id=None, date_field='created', date_from=None, date_to=None, timezone_offset=0):
         position = decode_cursor(cursor)
         with Session(self.engine) as session:
             valid_column = select(Column.id).join(Board, Board.id == Column.board_id).where(
@@ -76,6 +77,18 @@ class SqlBoardRepository:
                     Card.is_stub.is_(False), Card.archived.is_(archived), Card.deleted_at.is_(None))
             for identifier in set(tag_id or []):
                 statement = statement.where(Card.id.in_(select(CardTag.card_id).where(CardTag.tag_id == identifier)))
+            for identifier in set(user_id or []):
+                statement = statement.where(Card.id.in_(select(CardMember.card_id).where(CardMember.user_id == identifier)))
+            date_column = {'created': func.coalesce(Card.source_created_at, Card.created_at),
+                           'updated': func.coalesce(Card.source_updated_at, Card.updated_at), 'due': Card.due_date}[date_field]
+            local_timezone = timezone(timedelta(minutes=-timezone_offset))
+            if date_from:
+                start = datetime.combine(date_from, time.min, local_timezone).astimezone(timezone.utc)
+                statement = statement.where(date_column >= start)
+            if date_to:
+                # Half-open bounds include the complete final day, including fractional seconds.
+                end = datetime.combine(date_to, time.min, local_timezone).astimezone(timezone.utc) + timedelta(days=1)
+                statement = statement.where(date_column < end)
             term = query.strip().lower()
             if term:
                 matching_tag = select(CardTag.card_id).join(Tag, Tag.id == CardTag.tag_id).where(
@@ -83,6 +96,7 @@ class SqlBoardRepository:
                 statement = statement.where(or_(func.lower(Card.title).contains(term, autoescape=True),
                     cast(Card.display_number, String).contains(term.lstrip('#'), autoescape=True) if term.lstrip('#') else False,
                     Card.id.in_(matching_tag)))
+            total = session.scalar(select(func.count()).select_from(statement.subquery()))
             if position:
                 order, identifier = position
                 statement = statement.where(or_(Card.sort_order > order, and_(Card.sort_order == order, Card.id > identifier)))
@@ -119,7 +133,7 @@ class SqlBoardRepository:
                 'title': row['title'], 'columnId': row['column_id'], 'laneId': row['lane_id'], 'sortOrder': str(row['sort_order']),
                 'version': row['local_version'], 'asap': row['asap'], 'tags': tags.get(row['id'], []),
                 'cover': covers.get(row['id']), 'members': members.get(row['id'], [])} for row in rows],
-                'nextCursor': encode_cursor(rows[-1]) if has_more else None}
+                'nextCursor': encode_cursor(rows[-1]) if has_more else None, 'total': total}
 
     def image(self, attachment_id):
         with Session(self.engine) as session:

@@ -15,13 +15,16 @@ const summary = {
   description: null,
   sourceId: "437516",
 };
-beforeEach(() => vi.restoreAllMocks());
-function mount() {
+beforeEach(() => {
+  vi.restoreAllMocks();
+  localStorage.clear();
+});
+function mount(url = "/") {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: 30_000 } },
   });
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[url]}>
       <QueryClientProvider client={client}>
         <BoardPage />
       </QueryClientProvider>
@@ -283,4 +286,127 @@ describe("working board homepage", () => {
       await screen.findByRole("heading", { name: "Досок пока нет" }),
     ).toBeInTheDocument();
   });
+});
+
+it("restores the view, lets an explicit URL override it and saves subsequent choices", async () => {
+  vi.spyOn(boardApi, "list").mockResolvedValue([]);
+  localStorage.setItem("board-view", "lists");
+  const first = mount();
+  expect(screen.getByRole("button", { name: "Списки" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  first.unmount();
+  mount("/?view=board");
+  expect(screen.getByRole("button", { name: "Доски" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  expect(localStorage.getItem("board-view")).toBe("board");
+  await userEvent.click(screen.getByRole("button", { name: "Списки" }));
+  expect(localStorage.getItem("board-view")).toBe("lists");
+});
+
+it("combines avatar and date filters with search and updates the complete column count", async () => {
+  vi.spyOn(boardApi, "list").mockResolvedValue([summary]);
+  vi.spyOn(boardApi, "structure").mockResolvedValue({
+    board: summary,
+    lanes: [],
+    columns: [
+      {
+        id: a,
+        title: "Печать",
+        parentId: null,
+        sortOrder: "0",
+        type: 2,
+        wipLimit: null,
+      },
+    ],
+  });
+  const cell = vi
+    .spyOn(cardApi, "cell")
+    .mockImplementation(async (_board, _column, _lane, _cursor, filters) => ({
+      total: filters?.search ? 0 : filters?.users?.length ? 3 : 42,
+      items: filters?.search
+        ? []
+        : [
+            {
+              id: a,
+              title: "Заказ",
+              number: "1",
+              columnId: a,
+              laneId: null,
+              sortOrder: "1",
+              version: 1,
+              asap: false,
+              cover: null,
+              tags: [],
+              members: [{ id: b, name: "Анна" }],
+            },
+          ],
+      nextCursor: null,
+    }));
+  mount();
+  await waitFor(() =>
+    expect(
+      screen.getByLabelText("Количество карточек в колонке «Печать»"),
+    ).toHaveTextContent("42"),
+  );
+  await userEvent.click(
+    screen.getByRole("button", { name: "Фильтровать по пользователю «Анна»" }),
+  );
+  await waitFor(() =>
+    expect(
+      screen.getByLabelText("Количество карточек в колонке «Печать»"),
+    ).toHaveTextContent("3"),
+  );
+  expect(
+    screen.getByRole("region", { name: "Активные фильтры" }),
+  ).toHaveTextContent("Пользователь: Анна");
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  await userEvent.click(screen.getByText("Дата"));
+  await userEvent.selectOptions(screen.getByLabelText("Поле даты"), "due");
+  // Native date fields accept complete ISO dates.
+  const { fireEvent } = await import("@testing-library/react");
+  fireEvent.change(screen.getByLabelText("С"), {
+    target: { value: "2026-10-01" },
+  });
+  fireEvent.change(screen.getByLabelText("По"), {
+    target: { value: "2026-10-30" },
+  });
+  await userEvent.click(screen.getByRole("button", { name: "Применить" }));
+  await waitFor(() =>
+    expect(cell).toHaveBeenLastCalledWith(
+      a,
+      a,
+      null,
+      null,
+      expect.objectContaining({
+        users: [b],
+        dateField: "due",
+        dateFrom: "2026-10-01",
+        dateTo: "2026-10-30",
+      }),
+      expect.any(AbortSignal),
+    ),
+  );
+  expect(
+    screen.getByRole("region", { name: "Активные фильтры" }),
+  ).toHaveTextContent("Срок выполнения: с 01.10.2026 по 30.10.2026");
+  await userEvent.click(screen.getByRole("button", { name: "Списки" }));
+  await userEvent.type(screen.getByRole("searchbox"), "нет{Enter}");
+  await waitFor(() =>
+    expect(
+      screen.getByLabelText("Количество карточек в колонке «Печать»"),
+    ).toHaveTextContent("0"),
+  );
+  await userEvent.click(screen.getByRole("button", { name: "Очистить" }));
+  await waitFor(() =>
+    expect(
+      screen.getByLabelText("Количество карточек в колонке «Печать»"),
+    ).toHaveTextContent("42"),
+  );
+  expect(
+    screen.queryByRole("region", { name: "Активные фильтры" }),
+  ).not.toBeInTheDocument();
 });
