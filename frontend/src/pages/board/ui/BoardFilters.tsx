@@ -5,7 +5,7 @@ import styles from "./BoardControls.module.scss";
 
 type Filter = "search" | "tag" | "archived" | "user" | "date";
 
-function FilterChip({
+export function FilterChip({
   children,
   label,
   onRemove,
@@ -67,6 +67,7 @@ export function BoardFilters({
   dateTo,
   onRemove,
   onClear,
+  onOpen,
 }: {
   search: string;
   tags: { id: string; name: string }[];
@@ -77,6 +78,7 @@ export function BoardFilters({
   dateTo: string;
   onRemove: (filter: Filter, id?: string) => void;
   onClear: () => void;
+  onOpen: () => void;
 }) {
   const hasDate = !!(dateFrom || dateTo);
   const count =
@@ -102,10 +104,16 @@ export function BoardFilters({
 
   return (
     <section className={styles.filters} aria-label="Активные фильтры">
-      <span className={styles.filterLabel}>
+      <button
+        type="button"
+        className={styles.filterLabel}
+        onClick={onOpen}
+        aria-haspopup="dialog"
+        aria-label="Настроить фильтры"
+      >
         <Icon name="filter" size={16} />
         Фильтры <span className={styles.filterCount}>{count}</span>
-      </span>
+      </button>
       <div className={styles.filterItems}>
         {!!users.length && (
           <FilterGroup icon="users" label="Участники" count={users.length}>

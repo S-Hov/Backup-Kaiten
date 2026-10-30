@@ -13,7 +13,11 @@ export function BoardToolbar({
   dateFrom,
   dateTo,
   onDate,
+  hasFilters,
+  onOpenFilters,
 }: {
+  hasFilters: boolean;
+  onOpenFilters: () => void;
   view: BoardView;
   archived: boolean;
   onView: (view: BoardView) => void;
@@ -109,6 +113,16 @@ export function BoardToolbar({
           <button type="submit">Применить</button>
         </form>
       </details>
+      {!hasFilters && (
+        <button
+          className={styles.archive}
+          onClick={onOpenFilters}
+          aria-haspopup="dialog"
+        >
+          <Icon name="filter" size={17} />
+          Фильтр
+        </button>
+      )}
       <button className={styles.add} disabled={!canAdd} onClick={onAdd}>
         <Icon name="plus" size={17} />
         Добавить

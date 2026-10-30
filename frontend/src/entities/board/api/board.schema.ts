@@ -28,3 +28,17 @@ export type BoardSummary = z.infer<typeof boardSummarySchema>;
 export type BoardColumn = z.infer<typeof boardColumnSchema>;
 export type BoardLane = z.infer<typeof boardLaneSchema>;
 export type BoardStructure = z.infer<typeof boardStructureSchema>;
+
+export const boardFilterOptionsSchema = z.object({
+  tags: z.array(
+    z.object({ id: z.uuid(), name: z.string(), color: z.string().nullable() }),
+  ),
+  users: z.array(
+    z.object({
+      id: z.uuid(),
+      name: z.string(),
+      avatarUrl: z.string().nullable().optional(),
+    }),
+  ),
+});
+export type BoardFilterOptions = z.infer<typeof boardFilterOptionsSchema>;

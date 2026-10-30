@@ -95,6 +95,44 @@ class BoardApiTests(unittest.TestCase):
             empty = Board(id=uuid4(), title='Новая'); session.add(empty); empty_id = empty.id
         self.assertEqual(self.client.get(f'/api/v1/boards/{empty_id}/structure').json()['columns'], [])
 
+    def test_filter_options_cover_all_pages_and_archive_without_duplicates_or_private_fields(self):
+        from backend.app.infrastructure.database.avatar_models import UserAvatar
+        first, second, _ = self.seed_cards()
+        with Session(self.engine) as session, session.begin():
+            archived = session.scalar(select(Card.id).where(Card.board_id == self.board_id, Card.archived.is_(True)))
+            deleted = session.scalar(select(Card.id).where(Card.board_id == self.board_id, Card.deleted_at.is_not(None)))
+            stub = session.scalar(select(Card.id).where(Card.board_id == self.board_id, Card.is_stub.is_(True)))
+            other = Board(id=uuid4(), title='Другая доска'); session.add(other); session.flush()
+            other_card = Card(id=uuid4(), board_id=other.id, title='Чужая'); session.add(other_card); session.flush()
+            user_ids, tag_ids = [], []
+            for index, card_id in enumerate([second, archived, deleted, stub, other_card.id]):
+                user_id, tag_id = uuid4(), uuid4()
+                user_ids.append(user_id); tag_ids.append(tag_id)
+                session.add_all([models.User(id=user_id, full_name=f'Участник {index}', email='private@example.test'),
+                                 Tag(id=tag_id, name=f'Метка {index}', color='16')]); session.flush()
+                session.add_all([models.CardMember(card_id=card_id, user_id=user_id, role='member'), CardTag(card_id=card_id, tag_id=tag_id)])
+            session.add_all([models.CardMember(card_id=first, user_id=user_ids[0], role='member'),
+                             models.CardMember(card_id=second, user_id=user_ids[0], role='owner'),
+                             CardTag(card_id=first, tag_id=tag_ids[0])])
+            avatar_file = FileObject(id=uuid4(), storage_key='local-upload:avatar', mime_type='image/png', size=4)
+            session.add(avatar_file); session.flush()
+            session.add(UserAvatar(user_id=user_ids[0], mode='custom', custom_file_id=avatar_file.id))
+            expected_avatar = f'/api/v1/users/{user_ids[0]}/avatar?v={avatar_file.id}'
+        response = self.client.get(f'/api/v1/boards/{self.board_id}/filter-options')
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual([item['name'] for item in payload['tags']], ['Метка 0', 'Метка 1', 'Печать'])
+        self.assertEqual([item['id'] for item in payload['users']], [str(identifier) for identifier in user_ids[:2]])
+        self.assertEqual(payload['users'][0]['avatarUrl'], expected_avatar)
+        self.assertNotIn('email', response.text)
+        self.assertNotIn('source_data', response.text)
+
+    def test_filter_options_validate_board_and_support_empty_lists(self):
+        self.assertEqual(self.client.get(f'/api/v1/boards/{self.board_id}/filter-options').json(), {'tags': [], 'users': []})
+        for identifier in [uuid4(), self.other_board]:
+            self.assertEqual(self.client.get(f'/api/v1/boards/{identifier}/filter-options').status_code, 404)
+        self.assertEqual(self.client.get('/api/v1/boards/invalid/filter-options').status_code, 422)
+
     def seed_cards(self):
         with Session(self.engine) as session, session.begin():
             lane_id = session.scalar(select(Lane.id).where(Lane.board_id == self.board_id, Lane.title == 'Срочные'))

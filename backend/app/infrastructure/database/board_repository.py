@@ -61,6 +61,23 @@ class SqlBoardRepository:
                  'sortOrder': str(row['sort_order']), 'type': row['type'], 'wipLimit': row['wip_limit']} for row in columns],
                 'lanes': [{'id': row['id'], 'title': row['title'], 'sortOrder': str(row['sort_order'])} for row in lanes]}
 
+    def filter_options(self, board_id):
+        with Session(self.engine) as session:
+            if session.scalar(select(Board.id).where(Board.id == board_id, Board.is_stub.is_(False))) is None:
+                raise FileNotFoundError('Доска не найдена')
+            # Include archived cards and all pages, independently of the active filters.
+            cards = select(Card.id).where(Card.board_id == board_id, Card.is_stub.is_(False), Card.deleted_at.is_(None))
+            tags = session.execute(select(Tag.id, Tag.name, Tag.color).where(
+                Tag.is_stub.is_(False), Tag.id.in_(select(CardTag.tag_id).where(CardTag.card_id.in_(cards))))).mappings()
+            users = session.execute(select(User.id, User.full_name, User.username, UserAvatar).outerjoin(
+                UserAvatar, UserAvatar.user_id == User.id).where(User.is_stub.is_(False),
+                    User.id.in_(select(CardMember.user_id).where(CardMember.card_id.in_(cards)))))
+            tag_options = [{'id': row['id'], 'name': row['name'], 'color': row['color']} for row in tags]
+            user_options = [{'id': identifier, 'name': name or username or 'Участник',
+                             'avatarUrl': avatar_url(identifier, avatar)} for identifier, name, username, avatar in users]
+            return {'tags': sorted(tag_options, key=lambda item: (item['name'].casefold(), str(item['id']))),
+                    'users': sorted(user_options, key=lambda item: (item['name'].casefold(), str(item['id'])))}
+
     def cards(self, board_id, column_id, lane_id, limit=30, cursor=None, archived=False, query='', tag_id=None, user_id=None, date_field='created', date_from=None, date_to=None, timezone_offset=0):
         position = decode_cursor(cursor)
         with Session(self.engine) as session:

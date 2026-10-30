@@ -175,6 +175,13 @@
   min-height: 32px;
   color: var(--text-secondary);
   white-space: nowrap;
+  border-radius: var(--radius-md);
+  padding-inline: var(--space-6);
+  margin-inline: -6px;
+}
+.filterLabel:hover {
+  background: var(--accent-soft);
+  color: var(--accent-text);
 }
 .filterCount,
 .groupCount {

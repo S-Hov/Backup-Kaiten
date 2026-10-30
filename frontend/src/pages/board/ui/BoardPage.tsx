@@ -9,6 +9,7 @@ import { useBoardNavigation } from "../model/use-board-navigation";
 import { BoardSidebar } from "./BoardSidebar";
 import { BoardHeader } from "./BoardHeader";
 import { BoardToolbar } from "./BoardToolbar";
+import { BoardFilterDialog } from "./BoardFilterDialog";
 import { BoardFilters } from "./BoardFilters";
 import styles from "./BoardPage.module.scss";
 const CardModal = lazy(() =>
@@ -44,6 +45,7 @@ export function BoardPage() {
   const nav = useBoardNavigation();
   const [collapsed, setCollapsed] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [filtering, setFiltering] = useState(false);
   const [filterReset, setFilterReset] = useState(0);
   const boards = useQuery(boardQueries.list());
   const selected = nav.board || boards.data?.[0]?.id || "";
@@ -55,7 +57,10 @@ export function BoardPage() {
   useEffect(() => {
     document.title = `${current?.title || "Доска"} · Заказы`;
   }, [current?.title]);
-  useEffect(() => setCreating(false), [selected]);
+  useEffect(() => {
+    setCreating(false);
+    setFiltering(false);
+  }, [selected]);
   function refresh() {
     void boards.refetch();
     if (selected) void structure.refetch();
@@ -86,6 +91,17 @@ export function BoardPage() {
           onSearch={(search) => nav.update({ search }, true)}
         />
         <BoardToolbar
+          hasFilters={
+            !!(
+              nav.search ||
+              nav.tags.length ||
+              nav.users.length ||
+              nav.archived ||
+              nav.dateFrom ||
+              nav.dateTo
+            )
+          }
+          onOpenFilters={() => setFiltering(true)}
           dateField={nav.dateField}
           dateFrom={nav.dateFrom}
           dateTo={nav.dateTo}
@@ -98,6 +114,7 @@ export function BoardPage() {
           canAdd={canAdd && account?.role !== "viewer"}
         />
         <BoardFilters
+          onOpen={() => setFiltering(true)}
           search={nav.search}
           tags={nav.tags}
           users={nav.users}
@@ -178,6 +195,18 @@ export function BoardPage() {
           )}
         </main>
       </div>
+      {filtering && (
+        <BoardFilterDialog
+          boardId={selected}
+          initial={nav}
+          onClose={() => setFiltering(false)}
+          onApply={(filters) => {
+            setFilterReset((value) => value + 1);
+            nav.update(filters);
+            setFiltering(false);
+          }}
+        />
+      )}
       {nav.card && (
         <Suspense fallback={null}>
           <CardModal

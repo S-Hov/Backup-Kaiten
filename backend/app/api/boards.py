@@ -50,6 +50,17 @@ class CardCover(BaseModel):
     explicit: bool
 
 
+class FilterUser(BaseModel):
+    id: UUID
+    name: str
+    avatarUrl: str | None
+
+
+class BoardFilterOptions(BaseModel):
+    tags: list[CardTag]
+    users: list[FilterUser]
+
+
 class CardPreview(BaseModel):
     id: UUID
     number: str | None
@@ -135,6 +146,11 @@ def boards(service: Service):
 @router.get('/{board_id}/structure', response_model=BoardStructure)
 def structure(board_id: UUID, service: Service):
     return service.structure(board_id)
+
+
+@router.get('/{board_id}/filter-options', response_model=BoardFilterOptions)
+def filter_options(board_id: UUID, service: Service):
+    return service.filter_options(board_id)
 
 
 @router.get('/{board_id}/cards', response_model=CardPage)

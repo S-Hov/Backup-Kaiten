@@ -5,6 +5,7 @@ export type {
   BoardColumn,
   BoardLane,
   BoardStructure,
+  BoardFilterOptions,
 } from "./api/board.schema";
 export { columnTree, leafColumns } from "./model/column-tree";
 export type { ColumnNode } from "./model/column-tree";
