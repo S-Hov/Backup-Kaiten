@@ -2,6 +2,7 @@ import { useSearchParams } from "react-router-dom";
 import { useLayoutEffect, useRef } from "react";
 import { readBoardLocation, updateBoardParams } from "@/shared/config";
 import type { BoardLocation } from "@/shared/config";
+import { readBoardView, storeBoardView } from "@/shared/lib/board-view";
 
 export function useBoardNavigation() {
   const [params, setParams] = useSearchParams();
@@ -11,12 +12,7 @@ export function useBoardNavigation() {
   }, [params]);
   const state = readBoardLocation(params);
   if (!params.has("view")) {
-    try {
-      state.view =
-        localStorage.getItem("board-view") === "lists" ? "lists" : "board";
-    } catch {
-      /* Storage can be disabled by the browser. */
-    }
+    state.view = readBoardView();
   }
   useLayoutEffect(() => {
     if (!params.has("view")) {
@@ -25,11 +21,7 @@ export function useBoardNavigation() {
       latest.current = next;
       setParams(next, { replace: true });
     }
-    try {
-      localStorage.setItem("board-view", state.view);
-    } catch {
-      /* Keep navigation usable without storage. */
-    }
+    storeBoardView(state.view);
   }, [params, setParams, state.view]);
   function update(patch: Partial<BoardLocation>, replace = false) {
     const next = updateBoardParams(latest.current, patch);

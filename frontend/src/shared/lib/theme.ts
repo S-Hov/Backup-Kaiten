@@ -1,3 +1,5 @@
+import { useSyncExternalStore } from "react";
+
 export const themes = [
   { id: "light", label: "Светлая" },
   { id: "warm", label: "Бумажная" },
@@ -33,4 +35,27 @@ export function setTheme(theme: Theme) {
   } catch {
     /* Switching still works when storage is disabled. */
   }
+  window.dispatchEvent(new Event("theme-change"));
+}
+
+function subscribe(listener: () => void) {
+  function onStorage(event: StorageEvent) {
+    if (event.key === storageKey || event.key === null) {
+      initializeTheme();
+      listener();
+    }
+  }
+  window.addEventListener("theme-change", listener);
+  window.addEventListener("storage", onStorage);
+  return () => {
+    window.removeEventListener("theme-change", listener);
+    window.removeEventListener("storage", onStorage);
+  };
+}
+
+export function useTheme(): Theme {
+  return useSyncExternalStore(subscribe, () => {
+    const current = document.documentElement.dataset.theme;
+    return isTheme(current) ? current : "light";
+  });
 }

@@ -1,11 +1,11 @@
 import { Icon } from "@/shared/ui/icon";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authApi, useSession } from "@/entities/session";
 import { Avatar } from "@/shared/ui";
 import { routePaths } from "@/shared/config";
-import { isTheme, setTheme, themes, type Theme } from "@/shared/lib/theme";
+import { ThemePicker } from "@/shared/ui/theme-picker";
 import styles from "./AccountMenu.module.scss";
 
 export function AccountMenu() {
@@ -34,14 +34,6 @@ export function AccountMenu() {
       document.removeEventListener("keydown", onKeyDown);
     };
   }, []);
-  const [theme, updateTheme] = useState<Theme>(() => {
-    const current = document.documentElement.dataset.theme;
-    return isTheme(current) ? current : "light";
-  });
-  function selectTheme(next: Theme) {
-    setTheme(next);
-    updateTheme(next);
-  }
   const user = useSession();
   const client = useQueryClient();
   const navigate = useNavigate();
@@ -89,39 +81,7 @@ export function AccountMenu() {
             Настройки профиля
           </Link>
         </div>
-        <fieldset className={styles.themePicker}>
-          <legend>Оформление</legend>
-          <div className={styles.themeOptions}>
-            {themes.map(({ id, label }) => (
-              <label className={styles.themeOption} key={id}>
-                <input
-                  type="radio"
-                  name="account-theme"
-                  value={id}
-                  checked={theme === id}
-                  onChange={() => selectTheme(id)}
-                />
-                <span className={styles.themeTile}>
-                  <span
-                    className={styles.themePreview}
-                    data-theme-preview={id}
-                    aria-hidden="true"
-                  >
-                    <span className={styles.previewSidebar} />
-                    <span className={styles.previewCard} />
-                    <span className={styles.previewCard} />
-                  </span>
-                  <span className={styles.themeLabel}>
-                    {label}
-                    <span className={styles.themeCheck} aria-hidden="true">
-                      <Icon name="check" size={14} />
-                    </span>
-                  </span>
-                </span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
+        <ThemePicker compact />
         {user.role === "admin" && (
           <nav className={styles.adminSection} aria-label="Администрирование">
             <span className={styles.sectionTitle}>Администрирование</span>

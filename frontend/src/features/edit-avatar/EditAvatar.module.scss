@@ -16,6 +16,17 @@
 .controls h2 {
   margin-top: 0;
 }
+.controls label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin-bottom: var(--space-16);
+  font-size: var(--font-size-12);
+}
+.actions button:first-child {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
 .actions {
   display: flex;
   flex-wrap: wrap;
