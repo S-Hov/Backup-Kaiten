@@ -20,6 +20,11 @@ export const useSession = () => useContext(SessionContext);
 const ok = z.object({ ok: z.boolean() });
 export const sessionKey = ["auth", "me"] as const;
 export const authApi = {
+  updateProfile: (name: string) =>
+    apiClient("/auth/profile", sessionSchema, {
+      method: "POST",
+      body: { name },
+    }),
   avatar: (file: File) =>
     apiClient("/auth/avatar", z.object({ avatarUrl: z.string().nullable() }), {
       method: "POST",

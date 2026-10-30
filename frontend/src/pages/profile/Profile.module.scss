@@ -217,6 +217,23 @@
     overflow-wrap: anywhere;
   }
 }
+.section .nameHint {
+  margin: var(--space-20) 0;
+  font-size: var(--font-size-12);
+}
+.profileActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-16);
+  > span {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-6);
+    color: var(--success);
+    font-size: var(--font-size-12);
+  }
+}
 .note {
   display: flex;
   align-items: flex-start;

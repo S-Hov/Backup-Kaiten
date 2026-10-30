@@ -52,6 +52,22 @@ class AuthService:
                 'avatarUrl': avatar_url(user.id, avatar),
                 'sourceId': str(user.source_id) if user.source_id is not None else None}
 
+    def update_profile(self, identity, name):
+        name = ' '.join(name.split())
+        if not name or len(name) > 200:
+            raise ValueError('Укажите имя от 1 до 200 символов')
+        if any(ord(character) < 32 or ord(character) == 127 for character in name):
+            raise ValueError('Имя содержит недопустимые символы')
+        with Session(self.engine) as session, session.begin():
+            account = session.get(Account, identity['accountId'])
+            user = session.scalar(select(User).where(User.id == identity['userId']).with_for_update())
+            if user.full_name != name:
+                user.full_name = name
+                user.initials = ''.join(part[0] for part in name.split()[:2]).upper()
+                user.local_version += 1
+                session.add(AuthEvent(actor_id=account.id, subject_id=account.id, action='profile_updated'))
+            return self.profile(account, user, session.get(UserAvatar, user.id))
+
     def session(self, token):
         if not token or len(token) > 128:
             raise HTTPException(401, 'Войдите в систему')

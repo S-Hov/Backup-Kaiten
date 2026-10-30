@@ -55,6 +55,41 @@ class AuthTests(unittest.TestCase):
         with Session(self.engine) as session:
             self.assertIsNone(session.scalar(select(Account)))
 
+    def test_profile_name_is_saved_for_own_user_and_survives_new_sessions(self):
+        self.activate(role='viewer')
+        self.login()
+        with Session(self.engine) as session, session.begin():
+            other = User(full_name='Другой пользователь', email='other@example.test')
+            session.add(other)
+            session.flush()
+            other_id = other.id
+        response = self.post('/auth/profile', {'name': '  Анна   Петрова  '})
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(response.json()['name'], 'Анна Петрова')
+        self.assertEqual(response.json()['initials'], 'АП')
+        self.assertEqual(response.json()['role'], 'viewer')
+        self.assertEqual(self.client.get('/api/v1/auth/me').json()['name'], 'Анна Петрова')
+        with Session(self.engine) as session:
+            user = session.get(User, self.user_id)
+            self.assertEqual(user.full_name, 'Анна Петрова')
+            self.assertEqual(user.local_version, 2)
+            self.assertEqual(session.get(User, other_id).full_name, 'Другой пользователь')
+        self.assertEqual(self.post('/auth/profile', {'name': 'Анна Петрова'}).status_code, 200)
+        with Session(self.engine) as session:
+            self.assertEqual(session.get(User, self.user_id).local_version, 2)
+        self.post('/auth/logout')
+        self.assertEqual(self.login().json()['name'], 'Анна Петрова')
+
+    def test_profile_updates_require_authentication_csrf_and_valid_name(self):
+        self.assertEqual(self.post('/auth/profile', {'name': 'Новое имя'}).status_code, 401)
+        self.activate()
+        self.login()
+        self.assertEqual(self.client.post('/api/v1/auth/profile', json={'name': 'Новое имя'}).status_code, 403)
+        for body in ({'name': ''}, {'name': '   '}, {'name': 'x' * 201}, {'name': 'A\x00B'},
+                     {'name': 'Новое имя', 'userId': str(uuid4())}, {'name': 'Новое имя', 'role': 'admin'}):
+            self.assertIn(self.post('/auth/profile', body).status_code, (400, 422), body)
+        self.assertEqual(self.client.get('/api/v1/auth/me').json()['name'], 'Администратор')
+
     def test_activation_is_one_time_credentials_are_hashed_and_sessions_revoke(self):
         invite = self.activate()
         self.assertEqual(self.client.post('/api/v1/auth/activate', json={'token':invite['token'],'password':PASSWORD}).status_code, 400)

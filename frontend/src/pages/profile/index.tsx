@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { authApi, useSession } from "@/entities/session";
+import { authApi, sessionKey, useSession } from "@/entities/session";
 import { EditAvatar } from "@/features/edit-avatar";
 import { routePaths, type BoardView } from "@/shared/config";
 import { formatDate } from "@/shared/lib/format";
@@ -54,6 +54,19 @@ export function ProfilePage() {
   const [password, setPassword] = useState("");
   const [repeat, setRepeat] = useState("");
   const [error, setError] = useState("");
+  const [editedName, setEditedName] = useState<string | null>(null);
+  const [nameError, setNameError] = useState("");
+  const name = editedName ?? user?.name ?? "";
+  const normalizedName = name.trim().replace(/\s+/g, " ");
+  const updateProfile = useMutation({
+    mutationFn: () => authApi.updateProfile(normalizedName),
+    retry: false,
+    onSuccess: (profile) => {
+      client.setQueryData(sessionKey, profile);
+      setEditedName(null);
+      void client.invalidateQueries();
+    },
+  });
   function exit() {
     client.clear();
     navigate(routePaths.login, { replace: true });
@@ -145,9 +158,18 @@ export function ProfilePage() {
 
           {active.id === "profile" && (
             <>
-              <section
+              <form
                 className={styles.section}
                 aria-labelledby="personal-title"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  if (!normalizedName) {
+                    setNameError("Укажите имя");
+                    return;
+                  }
+                  if (!updateProfile.isPending && normalizedName !== user?.name)
+                    updateProfile.mutate();
+                }}
               >
                 <div className={styles.sectionHeading}>
                   <h2 id="personal-title">Личные данные</h2>
@@ -155,8 +177,27 @@ export function ProfilePage() {
                 </div>
                 <dl className={styles.details}>
                   <div>
-                    <dt>Полное имя</dt>
-                    <dd>{user?.name || "—"}</dd>
+                    <dt>
+                      <label htmlFor="profile-name">Полное имя</label>
+                    </dt>
+                    <dd>
+                      <input
+                        id="profile-name"
+                        name="name"
+                        autoComplete="name"
+                        required
+                        maxLength={200}
+                        value={name}
+                        disabled={updateProfile.isPending}
+                        aria-describedby="profile-name-hint"
+                        aria-invalid={!!(nameError || updateProfile.error)}
+                        onChange={(event) => {
+                          setEditedName(event.target.value);
+                          setNameError("");
+                          updateProfile.reset();
+                        }}
+                      />
+                    </dd>
                   </div>
                   <div>
                     <dt>Электронная почта</dt>
@@ -173,7 +214,33 @@ export function ProfilePage() {
                     </div>
                   )}
                 </dl>
-              </section>
+                <p className={styles.nameHint} id="profile-name-hint">
+                  Это имя увидят коллеги на доске и в комментариях. Инициалы
+                  обновятся автоматически.
+                </p>
+                {(nameError || updateProfile.error) && (
+                  <p role="alert">
+                    {nameError || updateProfile.error?.message}
+                  </p>
+                )}
+                <div className={styles.profileActions}>
+                  <button
+                    className={styles.primaryButton}
+                    disabled={
+                      updateProfile.isPending || normalizedName === user?.name
+                    }
+                  >
+                    {updateProfile.isPending
+                      ? "Сохраняем…"
+                      : "Сохранить изменения"}
+                  </button>
+                  {updateProfile.isSuccess && (
+                    <span role="status">
+                      <Icon name="check" size={16} /> Имя сохранено
+                    </span>
+                  )}
+                </div>
+              </form>
               <section
                 className={styles.section}
                 aria-label="Изображение профиля"

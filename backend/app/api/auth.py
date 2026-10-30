@@ -1,7 +1,7 @@
 from typing import Annotated, Literal
 from uuid import UUID
 from fastapi import APIRouter, Depends, Request, Response, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 router = APIRouter(prefix='/auth', tags=['Local authentication'])
 Password = Annotated[str, Field(min_length=12, max_length=128)]
@@ -20,6 +20,11 @@ class Activate(BaseModel):
 class PasswordChange(BaseModel):
     currentPassword: str = Field(min_length=1, max_length=128)
     newPassword: Password
+
+
+class ProfileUpdate(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    name: str = Field(min_length=1, max_length=200)
 
 
 class Invitation(BaseModel):
@@ -63,6 +68,11 @@ def login(body: Login, request: Request, response: Response):
 @router.get('/me')
 def me(request: Request):
     return identity(request)['profile']
+
+
+@router.post('/profile')
+def update_profile(body: ProfileUpdate, request: Request):
+    return request.app.state.auth.update_profile(identity(request), body.name)
 
 
 @router.post('/activate')

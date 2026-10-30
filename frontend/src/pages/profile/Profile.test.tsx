@@ -2,8 +2,17 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { authApi, SessionContext, type SessionUser } from "@/entities/session";
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQuery,
+} from "@tanstack/react-query";
+import {
+  authApi,
+  SessionContext,
+  sessionKey,
+  type SessionUser,
+} from "@/entities/session";
 import { AccountMenu } from "@/features/account-menu";
 import { ProfilePage } from "./index";
 
@@ -25,12 +34,23 @@ function open(section = "profile", menu = false) {
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter initialEntries={[`/profile?section=${section}`]}>
-        <SessionContext.Provider value={user}>
-          {menu && <AccountMenu />}
-          <ProfilePage />
-        </SessionContext.Provider>
+        <ProfileSession menu={menu} />
       </MemoryRouter>
     </QueryClientProvider>,
+  );
+}
+function ProfileSession({ menu }: { menu: boolean }) {
+  const { data } = useQuery({
+    queryKey: sessionKey,
+    queryFn: authApi.me,
+    initialData: user,
+    enabled: false,
+  });
+  return (
+    <SessionContext.Provider value={data}>
+      {menu && <AccountMenu />}
+      <ProfilePage />
+    </SessionContext.Provider>
   );
 }
 beforeEach(() => {
@@ -38,6 +58,55 @@ beforeEach(() => {
   document.documentElement.dataset.theme = "light";
 });
 afterEach(() => vi.restoreAllMocks());
+
+it("saves the profile name and immediately updates the account menu", async () => {
+  const save = vi
+    .spyOn(authApi, "updateProfile")
+    .mockResolvedValue({ ...user, name: "Анна Петрова", initials: "АП" });
+  open("profile", true);
+  expect(
+    screen.getByRole("button", { name: "Сохранить изменения" }),
+  ).toBeDisabled();
+  await userEvent.clear(screen.getByLabelText("Полное имя"));
+  await userEvent.type(
+    screen.getByLabelText("Полное имя"),
+    "  Анна   Петрова  ",
+  );
+  await userEvent.click(
+    screen.getByRole("button", { name: "Сохранить изменения" }),
+  );
+  await waitFor(() => expect(save).toHaveBeenCalledWith("Анна Петрова"));
+  expect(await screen.findByRole("status")).toHaveTextContent("Имя сохранено");
+  expect(screen.getByLabelText("Полное имя")).toHaveValue("Анна Петрова");
+  expect(screen.getByLabelText("Аккаунт: Анна Петрова")).toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: "Сохранить изменения" }),
+  ).toBeDisabled();
+});
+
+it("rejects whitespace names and keeps the draft when saving fails", async () => {
+  const save = vi
+    .spyOn(authApi, "updateProfile")
+    .mockRejectedValue(new Error("Не удалось сохранить имя"));
+  open();
+  const input = screen.getByLabelText("Полное имя");
+  await userEvent.clear(input);
+  await userEvent.type(input, "   ");
+  await userEvent.click(
+    screen.getByRole("button", { name: "Сохранить изменения" }),
+  );
+  expect(screen.getByRole("alert")).toHaveTextContent("Укажите имя");
+  expect(save).not.toHaveBeenCalled();
+  await userEvent.clear(input);
+  await userEvent.type(input, "Новое имя");
+  await userEvent.click(
+    screen.getByRole("button", { name: "Сохранить изменения" }),
+  );
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Не удалось сохранить имя",
+  );
+  expect(input).toHaveValue("Новое имя");
+});
 
 it("keeps the theme pickers in account menu and profile synchronized", async () => {
   open("appearance", true);
