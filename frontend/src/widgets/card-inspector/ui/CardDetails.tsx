@@ -192,7 +192,7 @@ export function CardDetails({
                         key={`${user.id}:${index}`}
                         title={user.email}
                       >
-                        <Avatar label={fullName(user)} />
+                        <Avatar label={fullName(user)} src={user.avatarUrl} />
                         {fullName(user)}
                         {user.type === 2 && (
                           <span

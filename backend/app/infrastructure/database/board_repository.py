@@ -7,6 +7,8 @@ from uuid import UUID, uuid5
 from sqlalchemy import select, and_, or_, func, cast, String
 from sqlalchemy.orm import Session
 from .board_models import Board, Column, Lane, Card, CardTag, Tag, Attachment, FileObject
+from .board_models import CardMember, User
+from .avatar_models import UserAvatar, avatar_url
 
 
 BOARD_FIELDS = (Board.id, Board.title, Board.description, Board.source_id)
@@ -88,8 +90,17 @@ class SqlBoardRepository:
             has_more = len(rows) > limit
             rows = rows[:limit]
             ids = [row['id'] for row in rows]
-            tags, covers = {}, {}
+            tags, covers, members = {}, {}, {}
             if ids:
+                member_rows = session.execute(select(CardMember.card_id, User.id, User.full_name, User.username, UserAvatar).join(User, User.id == CardMember.user_id)
+                    .outerjoin(UserAvatar, UserAvatar.user_id == User.id).where(CardMember.card_id.in_(ids))
+                    .order_by(CardMember.card_id, User.full_name, User.id, CardMember.role))
+                seen_members = set()
+                for card_id, user_id, full_name, username, avatar in member_rows:
+                    if (card_id, user_id) not in seen_members:
+                        seen_members.add((card_id, user_id))
+                        members.setdefault(card_id, []).append({'id': user_id, 'name': full_name or username or 'Участник',
+                            'avatarUrl': avatar_url(user_id, avatar)})
                 tag_rows = session.execute(select(CardTag.card_id, Tag.id, Tag.name, Tag.color).join(Tag, Tag.id == CardTag.tag_id)
                     .where(CardTag.card_id.in_(ids), Tag.is_stub.is_(False)).order_by(Tag.name, Tag.id)).mappings()
                 for tag in tag_rows:
@@ -107,7 +118,7 @@ class SqlBoardRepository:
             return {'items': [{'id': row['id'], 'number': str(row['display_number']) if row['display_number'] is not None else None,
                 'title': row['title'], 'columnId': row['column_id'], 'laneId': row['lane_id'], 'sortOrder': str(row['sort_order']),
                 'version': row['local_version'], 'asap': row['asap'], 'tags': tags.get(row['id'], []),
-                'cover': covers.get(row['id'])} for row in rows],
+                'cover': covers.get(row['id']), 'members': members.get(row['id'], [])} for row in rows],
                 'nextCursor': encode_cursor(rows[-1]) if has_more else None}
 
     def image(self, attachment_id):

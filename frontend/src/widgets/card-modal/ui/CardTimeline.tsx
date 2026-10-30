@@ -117,7 +117,10 @@ export function CardTimeline({
                 className={`${styles.comment} ${account && comment.author?.id === account.userId ? styles.ownComment : ""}`}
               >
                 <div className={styles.author}>
-                  <Avatar label={comment.author?.name || "Участник"} />
+                  <Avatar
+                    label={comment.author?.name || "Участник"}
+                    src={comment.author?.avatarUrl}
+                  />
                   <div>
                     <strong>
                       {comment.author?.name ||

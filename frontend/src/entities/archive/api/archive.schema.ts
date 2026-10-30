@@ -5,6 +5,7 @@ const json: z.ZodType<Json> = z.json();
 const id = z.number().int().positive().safe();
 const date = z.string().nullable();
 const person = z.looseObject({
+  avatarUrl: z.string().nullable().optional(),
   id: id.optional(),
   full_name: z.string().optional(),
   name: z.string().optional(),

@@ -1,3 +1,4 @@
+import { Avatar } from "@/shared/ui";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -38,7 +39,14 @@ function UserRow({
   return (
     <tr>
       <td>
-        <strong>{user.name || "Без имени"}</strong>
+        <strong>
+          <Avatar
+            label={user.name || "Участник"}
+            initials={user.initials}
+            src={user.avatarUrl}
+          />{" "}
+          {user.name || "Без имени"}
+        </strong>
         <small>{user.email || "Почта не сохранена"}</small>
       </td>
       <td>

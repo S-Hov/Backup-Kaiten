@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authApi, useSession } from "@/entities/session";
+import { Avatar } from "@/shared/ui";
 import { routePaths } from "@/shared/config";
 import { isTheme, setTheme, themes, type Theme } from "@/shared/lib/theme";
 import styles from "./AccountMenu.module.scss";
@@ -39,15 +40,7 @@ export function AccountMenu() {
           <strong>{user.name}</strong>
           <small>{user.email}</small>
         </div>
-        <span>
-          {user.initials ||
-            user.name
-              .split(/\s+/)
-              .slice(0, 2)
-              .map((part) => part[0])
-              .join("")
-              .toUpperCase()}
-        </span>
+        <Avatar label={user.name} initials={user.initials} src={user.avatarUrl} />
       </summary>
       <div className={styles.popup}>
         <small>

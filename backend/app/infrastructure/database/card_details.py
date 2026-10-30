@@ -8,6 +8,7 @@ from sqlalchemy import func, select, or_
 from sqlalchemy.orm import Session
 from . import board_models as m
 from .models import ArchiveCard, ArchiveSnapshot
+from .avatar_models import UserAvatar, avatar_url
 
 
 def json_value(value):
@@ -53,10 +54,11 @@ def read_card_details(engine, card_id):
             *(row.responsible_id for row in items), *(row.checker_id for row in items),
             *(row.created_by_id for row in blockers), *(row.released_by_id for row in blockers)} - {None}
         users = {row.id: row for row in session.scalars(select(m.User).where(m.User.id.in_(user_ids)))} if user_ids else {}
+        avatars = {row.user_id: row for row in session.scalars(select(UserAvatar).where(UserAvatar.user_id.in_(user_ids)))} if user_ids else {}
 
         def person(identifier):
             row = users.get(identifier)
-            return {'id': row.id, 'name': row.full_name or row.username or 'Участник', 'email': row.email} if row else None
+            return {'id': row.id, 'name': row.full_name or row.username or 'Участник', 'email': row.email, 'avatarUrl': avatar_url(row.id, avatars.get(row.id))} if row else None
 
         def location(row):
             return {'id': row.id, 'title': row.title} if row else None

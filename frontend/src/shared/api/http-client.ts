@@ -30,6 +30,7 @@ export async function apiClient<T>(
     signal?: AbortSignal;
     method?: "GET" | "POST";
     body?: object;
+    binary?: Blob;
   } = {},
 ): Promise<T> {
   const query = new URLSearchParams(
@@ -55,6 +56,9 @@ export async function apiClient<T>(
       ...(options.method ? { method: options.method } : {}),
       headers: {
         ...(options.body ? { "Content-Type": "application/json" } : {}),
+        ...(options.binary
+          ? { "Content-Type": "application/octet-stream" }
+          : {}),
         ...(options.method === "POST" && csrf ? { "X-CSRF-Token": csrf } : {}),
       },
       ...(options.body
@@ -62,6 +66,7 @@ export async function apiClient<T>(
             body: JSON.stringify(options.body),
           }
         : {}),
+      ...(options.binary ? { body: options.binary } : {}),
     },
   );
   let data: unknown;

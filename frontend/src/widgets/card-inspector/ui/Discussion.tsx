@@ -112,7 +112,10 @@ export function Discussion({
                 .map((comment) => (
                   <article className="comment" key={comment.id}>
                     <div className="comment-heading">
-                      <Avatar label={fullName(comment.author)} />
+                      <Avatar
+                        label={fullName(comment.author)}
+                        src={comment.author?.avatarUrl}
+                      />
                       <div>
                         <b>{fullName(comment.author)}</b>
                         <time>

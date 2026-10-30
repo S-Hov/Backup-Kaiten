@@ -9,6 +9,7 @@ from starlette.exceptions import HTTPException
 from backend.app.core.passwords import hash_password, verify_password, token_hash
 from backend.app.infrastructure.database.board_models import Account, User
 from backend.app.infrastructure.database.auth_models import LoginSession, AccessToken, AuthThrottle, AuthEvent
+from backend.app.infrastructure.database.avatar_models import UserAvatar, avatar_url
 
 
 def now():
@@ -45,9 +46,10 @@ class AuthService:
             row.attempts += 1
 
     @staticmethod
-    def profile(account, user):
+    def profile(account, user, avatar=None):
         return {'id': str(account.id), 'userId': str(user.id), 'email': account.login, 'name': user.full_name or account.login,
                 'role': account.role, 'initials': user.initials, 'timezone': user.timezone, 'language': user.language,
+                'avatarUrl': avatar_url(user.id, avatar),
                 'sourceId': str(user.source_id) if user.source_id is not None else None}
 
     def session(self, token):
@@ -59,7 +61,7 @@ class AuthService:
             user = session.get(User, account.user_id) if account else None
             if not account or not account.active or not user:
                 raise HTTPException(401, 'Сессия завершена. Войдите снова')
-            return {'profile': self.profile(account, user), 'sessionId': row.id, 'csrfHash': row.csrf_hash, 'accountId': account.id, 'userId': user.id, 'role': account.role}
+            return {'profile': self.profile(account, user, session.get(UserAvatar, user.id)), 'sessionId': row.id, 'csrfHash': row.csrf_hash, 'accountId': account.id, 'userId': user.id, 'role': account.role}
 
     def login(self, email, password, ip, agent):
         email = login_name(email)
@@ -78,7 +80,7 @@ class AuthService:
                     expires_at=now()+timedelta(hours=12), user_agent=agent[:300]))
                 account.last_login_at = now()
                 session.add(AuthEvent(actor_id=account.id, subject_id=account.id, action='login'))
-                result = self.profile(account, session.get(User, account.user_id))
+                result = self.profile(account, session.get(User, account.user_id), session.get(UserAvatar, account.user_id))
                 session.execute(update(AuthThrottle).where(AuthThrottle.key == token_hash('login-email:' + email)).values(attempts=0))
         if failure:
             raise HTTPException(401, 'Неверная почта или пароль либо доступ отключён')
@@ -155,13 +157,13 @@ class AuthService:
 
     def users(self):
         with Session(self.engine) as session:
-            rows = session.execute(select(User, Account).outerjoin(Account, Account.user_id == User.id).where(User.is_stub.is_(False)).order_by(User.full_name, User.id))
+            rows = session.execute(select(User, Account, UserAvatar).outerjoin(Account, Account.user_id == User.id).outerjoin(UserAvatar, UserAvatar.user_id == User.id).where(User.is_stub.is_(False)).order_by(User.full_name, User.id))
             return [{'userId': str(user.id), 'name': user.full_name, 'email': account.login if account else user.email,
                 'sourceId': str(user.source_id) if user.source_id is not None else None, 'sourceActive': user.activated,
-                'timezone': user.timezone, 'language': user.language, 'initials': user.initials,
+                'timezone': user.timezone, 'language': user.language, 'initials': user.initials, 'avatarUrl': avatar_url(user.id, avatar),
                 'accountId': str(account.id) if account else None, 'role': account.role if account else None,
                 'hasPassword': bool(account and account.password_hash),
-                'status': ('active' if account.active else 'disabled' if account.disabled_at else 'pending') if account else 'no-access'} for user, account in rows]
+                'status': ('active' if account.active else 'disabled' if account.disabled_at else 'pending') if account else 'no-access'} for user, account, avatar in rows]
 
     def set_access(self, actor, account_id, active, role, revoke=False):
         if role not in ('admin', 'member', 'viewer'):

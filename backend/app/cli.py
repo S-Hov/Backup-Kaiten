@@ -21,6 +21,8 @@ def main():
     sub = parser.add_subparsers(dest='command', required=True)
     sub.add_parser('migrate', help='Применить миграции базы данных')
     sub.add_parser('enrich-existing', help='Дополнить профили и происхождение по уже сохранённым SQL-данным')
+    avatars = sub.add_parser('import-avatars', help='Сохранить аватарки профилей из уже импортированных данных')
+    avatars.add_argument('--force', action='store_true')
     invite = sub.add_parser('invite-user', help='Подготовить одноразовую ссылку установки пароля')
     invite.add_argument('--email', required=True)
     invite.add_argument('--role', choices=['admin', 'member', 'viewer'], default='member')
@@ -38,10 +40,15 @@ def main():
         return
     if args.command == 'update-board':
         raise SystemExit(run(args))
-    if args.command in ('enrich-existing', 'invite-user'):
+    if args.command in ('enrich-existing', 'invite-user', 'import-avatars'):
         engine = make_engine(settings.database_url)
         try:
-            if args.command == 'enrich-existing':
+            if args.command == 'import-avatars':
+                from backend.app.application.avatars import AvatarService
+                result = AvatarService(engine, settings.upload_root).import_saved(args.force)
+                print(json.dumps(result, ensure_ascii=False))
+                if result['errors']: raise SystemExit(2)
+            elif args.command == 'enrich-existing':
                 from backend.app.application.enrich_existing import enrich_existing
                 print(json.dumps(enrich_existing(engine), ensure_ascii=False))
             else:

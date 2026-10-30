@@ -79,7 +79,7 @@ export function CardContent({
                     key={`${member.id}:${member.role}`}
                     title={member.email || undefined}
                   >
-                    <Avatar label={member.name} />
+                    <Avatar label={member.name} src={member.avatarUrl} />
                     {member.name}
                     {member.role === 2 && <b title="Ответственный">★</b>}
                   </span>

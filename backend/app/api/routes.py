@@ -44,10 +44,10 @@ def search_cards(service: Service, snapshot: Snapshot, q: str = '',
 
 
 @router.get('/cards/{card_id}', response_model=CardViewModel, tags=['Cards'])
-def get_card(service: Service, card_id: int, snapshot: Snapshot):
+def get_card(service: Service, card_id: int, snapshot: Snapshot, request: Request):
     if card_id <= 0:
         raise ValueError('Номер карточки должен быть положительным')
-    return service.get_card(snapshot, card_id)
+    return request.app.state.avatars.enrich_archive(service.get_card(snapshot, card_id))
 
 
 @assets.get('/assets/{snapshot}/{card_id}/{index}', tags=['Files'])

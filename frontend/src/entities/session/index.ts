@@ -9,6 +9,7 @@ export const sessionSchema = z.object({
   name: z.string(),
   role: z.enum(["admin", "member", "viewer"]),
   initials: z.string().nullable(),
+  avatarUrl: z.string().nullable().optional(),
   timezone: z.string().nullable(),
   language: z.string().nullable(),
   sourceId: z.string().nullable(),
@@ -19,6 +20,17 @@ export const useSession = () => useContext(SessionContext);
 const ok = z.object({ ok: z.boolean() });
 export const sessionKey = ["auth", "me"] as const;
 export const authApi = {
+  avatar: (file: File) =>
+    apiClient("/auth/avatar", z.object({ avatarUrl: z.string().nullable() }), {
+      method: "POST",
+      binary: file,
+    }),
+  resetAvatar: (mode: "imported" | "initials") =>
+    apiClient(
+      "/auth/avatar/reset",
+      z.object({ avatarUrl: z.string().nullable() }),
+      { method: "POST", body: { mode } },
+    ),
   me: () => apiClient("/auth/me", sessionSchema),
   login: (email: string, password: string) =>
     apiClient("/auth/login", sessionSchema, {

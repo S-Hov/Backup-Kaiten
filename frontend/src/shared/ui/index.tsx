@@ -4,15 +4,39 @@ import type { Json } from "@/shared/api";
 export function Empty({ children }: { children: React.ReactNode }) {
   return <p className="section-empty">{children}</p>;
 }
-export function Avatar({ label }: { label: string }) {
+export function Avatar({
+  label,
+  src,
+  initials,
+}: {
+  label: string;
+  src?: string | null;
+  initials?: string | null;
+}) {
+  const [failedSrc, setFailedSrc] = useState<string>();
+  const safeSrc =
+    src && /^\/api\/v1\/users\/[a-f0-9-]+\/avatar\?v=[a-f0-9-]+$/.test(src)
+      ? src
+      : undefined;
   return (
-    <span className="avatar" aria-hidden="true">
-      {label
-        .split(/\s+/)
-        .slice(0, 2)
-        .map((part) => part[0])
-        .join("")
-        .toUpperCase()}
+    <span className="avatar" title={label} aria-hidden="true">
+      {safeSrc && failedSrc !== safeSrc ? (
+        <img
+          src={safeSrc}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          onError={() => setFailedSrc(safeSrc)}
+        />
+      ) : (
+        initials ||
+        label
+          .split(/\s+/)
+          .slice(0, 2)
+          .map((part) => part[0])
+          .join("")
+          .toUpperCase()
+      )}
     </span>
   );
 }

@@ -5,6 +5,7 @@ import { authApi, useSession } from "@/entities/session";
 import { routePaths } from "@/shared/config";
 import { formatDate } from "@/shared/lib/format";
 import styles from "./Profile.module.scss";
+import { EditAvatar } from "@/features/edit-avatar";
 export function ProfilePage() {
   const user = useSession();
   const client = useQueryClient();
@@ -35,6 +36,9 @@ export function ProfilePage() {
     <main className={styles.page}>
       <Link to={routePaths.board}>← На доску</Link>
       <h1>Профиль и безопасность</h1>
+      <section className={styles.section}>
+        <EditAvatar />
+      </section>
       <section className={styles.section}>
         <h2>{user?.name}</h2>
         <p>{user?.email}</p>

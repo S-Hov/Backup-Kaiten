@@ -181,7 +181,7 @@ class BoardApiTests(unittest.TestCase):
         try:
             response = self.card_page(lane)
             self.assertEqual(response.status_code, 200)
-            self.assertEqual(len(statements), 5)
+            self.assertEqual(len(statements), 6)  # Batched participant/portrait projection adds one query.
             self.assertFalse(any('source_data' in sql or 'cards.description' in sql or 'archive_' in sql for sql in statements))
             self.assertNotIn('storageKey', response.text)
         finally:

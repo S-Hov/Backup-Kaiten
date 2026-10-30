@@ -9,6 +9,15 @@ export const cardPreviewSchema = z.looseObject({
   sortOrder: z.string(),
   version: z.number().int().positive(),
   asap: z.boolean(),
+  members: z
+    .array(
+      z.object({
+        id: z.uuid(),
+        name: z.string(),
+        avatarUrl: z.string().nullable().optional(),
+      }),
+    )
+    .optional(),
   tags: z.array(
     z.looseObject({
       id: z.uuid(),

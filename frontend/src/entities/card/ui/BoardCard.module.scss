@@ -90,3 +90,9 @@
   margin-left: auto;
   color: var(--danger);
 }
+.members {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  margin-left: auto;
+}

@@ -1,0 +1,28 @@
+.editor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  gap: var(--space-20);
+}
+.preview :global(.avatar) {
+  width: 80px;
+  height: 80px;
+  font-size: var(--font-size-23);
+}
+.controls {
+  flex: 1;
+  min-width: 200px;
+}
+.controls h2 {
+  margin-top: 0;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+.actions button:not(:first-child) {
+  background: var(--surface-muted);
+  color: var(--text);
+  border: 1px solid var(--border);
+}

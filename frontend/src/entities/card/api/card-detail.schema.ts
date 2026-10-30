@@ -3,6 +3,7 @@ const json = z.json();
 const id = z.uuid();
 const date = z.string().nullable();
 const person = z.looseObject({
+  avatarUrl: z.string().nullable().optional(),
   id,
   name: z.string(),
   email: z.string().nullable(),

@@ -10,6 +10,7 @@ const user = z.object({
   timezone: z.string().nullable(),
   language: z.string().nullable(),
   initials: z.string().nullable(),
+  avatarUrl: z.string().nullable().optional(),
   accountId: z.uuid().nullable(),
   role: role.nullable(),
   status: z.enum(["active", "disabled", "pending", "no-access"]),

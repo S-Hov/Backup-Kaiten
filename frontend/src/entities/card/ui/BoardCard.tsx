@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Avatar } from "@/shared/ui";
 import type { CardPreview } from "../api/card.schema";
 import { tagColor } from "../lib/tag-color";
 import styles from "./BoardCard.module.scss";
@@ -81,6 +82,20 @@ export function BoardCard({
         <div className={styles.footer}>
           {card.number && <span>#{card.number}</span>}
           {card.asap && <span className={styles.urgent}>Срочно</span>}
+          {!!card.members?.length && (
+            <div className={styles.members} aria-label="Участники">
+              {card.members.slice(0, 5).map((member) => (
+                <Avatar
+                  key={member.id}
+                  label={member.name}
+                  src={member.avatarUrl}
+                />
+              ))}
+              {card.members.length > 5 && (
+                <span>+{card.members.length - 5}</span>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </>

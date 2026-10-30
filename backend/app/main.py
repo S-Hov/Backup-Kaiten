@@ -53,6 +53,9 @@ def create_app(settings=None, repository=None, attachments=None, board_repositor
     from backend.app.api.auth import router as auth_router
     from backend.app.api.auth_guard import guard
     app.state.auth = AuthService(getattr(board_repository, 'engine', engine))
+    from backend.app.application.avatars import AvatarService
+    from backend.app.api.avatars import router as avatar_router
+    app.state.avatars = AvatarService(getattr(board_repository, 'engine', engine), settings.upload_root)
     app.middleware('http')(guard)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=['127.0.0.1', 'localhost'])
 
@@ -92,6 +95,7 @@ def create_app(settings=None, repository=None, attachments=None, board_repositor
 
     app.include_router(router, prefix='/api/v1')
     app.include_router(auth_router, prefix='/api/v1')
+    app.include_router(avatar_router, prefix='/api/v1')
     app.include_router(board_router, prefix='/api/v1')
     app.include_router(board_images, prefix='/api/v1')
     app.include_router(router, prefix='/api', include_in_schema=False)

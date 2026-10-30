@@ -29,3 +29,4 @@ class ArchiveCard(Base):
 # archive tables or making any queries/imports when the module is imported.
 from . import board_models  # noqa: E402, F401
 from . import auth_models  # noqa: E402, F401
+from . import avatar_models  # noqa: E402, F401

@@ -60,6 +60,7 @@ class CardPreview(BaseModel):
     asap: bool
     tags: list[CardTag]
     cover: CardCover | None
+    members: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class CardPage(BaseModel):
