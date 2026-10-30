@@ -11,14 +11,13 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     if (pageTitles[location.pathname])
       document.title = pageTitles[location.pathname];
   }, [location.pathname]);
-  const publicPage =
+  const guestPage =
     location.pathname === routePaths.login ||
     location.pathname === routePaths.activate;
   const client = useQueryClient();
   const me = useQuery({
     queryKey: sessionKey,
     queryFn: authApi.me,
-    enabled: !publicPage,
     retry: false,
     refetchOnWindowFocus: true,
     refetchInterval: 60000,
@@ -34,7 +33,6 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     window.addEventListener("auth-expired", expired);
     return () => window.removeEventListener("auth-expired", expired);
   }, [client]);
-  if (publicPage) return children;
   if (me.isPending)
     return (
       <div className="loading-state" role="status">
@@ -45,7 +43,9 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     me.data === null ||
     (me.error instanceof ApiError && me.error.status === 401)
   )
-    return (
+    return guestPage ? (
+      children
+    ) : (
       <Navigate
         to={`${routePaths.login}?returnTo=${encodeURIComponent(location.pathname + location.search)}`}
         replace
@@ -58,6 +58,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
         <button onClick={() => void me.refetch()}>Повторить</button>
       </div>
     );
+  if (guestPage) return <Navigate to={routePaths.board} replace />;
   return (
     <SessionContext.Provider value={me.data}>
       {children}
