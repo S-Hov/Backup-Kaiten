@@ -1,10 +1,20 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authApi, useSession } from "@/entities/session";
 import { routePaths } from "@/shared/config";
+import { setTheme, type Theme } from "@/shared/lib/theme";
 import styles from "./AccountMenu.module.scss";
 
 export function AccountMenu() {
+  const [theme, updateTheme] = useState<Theme>(() =>
+    document.documentElement.dataset.theme === "dark" ? "dark" : "light",
+  );
+  function toggleTheme() {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    updateTheme(next);
+  }
   const user = useSession();
   const client = useQueryClient();
   const navigate = useNavigate();
@@ -51,7 +61,15 @@ export function AccountMenu() {
         {user.role === "admin" && (
           <Link to={routePaths.users}>Пользователи</Link>
         )}
-        <button disabled={logout.isPending} onClick={() => logout.mutate()}>
+        <button type="button" onClick={toggleTheme}>
+          {theme === "dark" ? "Включить светлую тему" : "Включить тёмную тему"}
+        </button>
+        <button
+          type="button"
+          className={styles.logout}
+          disabled={logout.isPending}
+          onClick={() => logout.mutate()}
+        >
           Выйти
         </button>
         {logout.error && <small role="alert">{logout.error.message}</small>}

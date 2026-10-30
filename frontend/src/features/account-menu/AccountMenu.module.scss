@@ -47,8 +47,14 @@
 }
 .popup button {
   text-align: left;
-  color: var(--danger);
+  color: var(--accent);
   padding: 0;
+}
+.popup button:hover {
+  text-decoration: underline;
+}
+.popup .logout {
+  color: var(--danger);
 }
 @media (max-width: 900px) {
   .menu summary div {
