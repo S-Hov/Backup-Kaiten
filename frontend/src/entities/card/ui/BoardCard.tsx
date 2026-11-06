@@ -15,6 +15,7 @@ function Cover({ url, name }: { url: string; name: string }) {
       alt={name}
       loading="lazy"
       decoding="async"
+      draggable={false}
       onError={() => setFailed(true)}
     />
   );

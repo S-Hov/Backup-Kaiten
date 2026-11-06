@@ -5,6 +5,8 @@ import type { CardFilters } from "@/entities/card";
 import type { BoardView } from "@/shared/config";
 import styles from "./KanbanBoard.module.scss";
 import { CardCell } from "./CardCell";
+import { CardDragProvider } from "./CardDragContext";
+import type { ComponentProps } from "react";
 
 type Counts = Record<string, number | undefined>;
 type CountHandler = (
@@ -147,7 +149,7 @@ function ListColumn({
 }
 
 /** Mounted only after board structure has loaded, then each cell loads its first card page. */
-export function KanbanBoard({
+function BoardContent({
   structure,
   onOpenCard,
   onSelectTag,
@@ -285,5 +287,17 @@ export function KanbanBoard({
         ))}
       </div>
     </div>
+  );
+}
+
+export function KanbanBoard(props: ComponentProps<typeof BoardContent>) {
+  return (
+    <CardDragProvider
+      key={`${props.structure.board.id}:${JSON.stringify(props.filters)}:${props.view}`}
+      boardId={props.structure.board.id}
+      archived={props.filters?.archived}
+    >
+      <BoardContent {...props} />
+    </CardDragProvider>
   );
 }

@@ -18,6 +18,20 @@ export interface NewCard {
   laneId: string | null;
 }
 export const cardApi = {
+  move: (
+    id: string,
+    body: {
+      version: number;
+      columnId: string;
+      laneId: string | null;
+      beforeCardId?: string;
+      afterCardId?: string;
+    },
+  ) =>
+    apiClient(`/cards/${id}/move`, z.object({ id: z.uuid() }), {
+      method: "POST",
+      body,
+    }),
   moveNext: (id: string, version: number) =>
     apiClient(`/cards/${id}/move-next`, z.object({ id: z.uuid() }), {
       method: "POST",

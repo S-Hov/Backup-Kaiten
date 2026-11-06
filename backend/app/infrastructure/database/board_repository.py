@@ -175,6 +175,10 @@ class SqlBoardRepository:
         from .card_operations import move_next
         return move_next(self.engine, card_id, version, actor)
 
+    def move_card(self, card_id, version, column_id, lane_id, before_id=None, after_id=None, actor=None):
+        from .card_operations import move_card
+        return move_card(self.engine, card_id, version, column_id, lane_id, before_id, after_id, actor)
+
     def add_comment(self, card_id, request_id, text, files, upload_root, actor=None):
         from .card_operations import add_comment
         return add_comment(self.engine, card_id, request_id, text, files, upload_root, actor)

@@ -355,6 +355,52 @@ class BoardApiTests(unittest.TestCase):
         self.assertEqual([item['title'] for item in response.json()['items']], ['Архив'])
         self.assertEqual(self.card_page(lane, q='Архив').json()['items'], [])
 
+    def test_move_inserts_between_equal_positions_and_preserves_hidden_cards(self):
+        first, second, lane = self.seed_cards()
+        moving = uuid4()
+        with Session(self.engine) as session, session.begin():
+            session.add(Card(id=moving, board_id=self.board_id, column_id=self.child, lane_id=lane, title='Перенос'))
+        url = f'/api/v1/cards/{moving}/move'
+        body = {'version': 1, 'columnId': str(self.second), 'laneId': str(lane), 'afterCardId': str(first)}
+        result = self.client.post(url, json=body)
+        self.assertEqual(result.status_code, 200, result.text)
+        self.assertEqual([item['id'] for item in self.card_page(lane).json()['items']], [str(first), str(moving), str(second)])
+        self.assertEqual(self.client.post(url, json=body).status_code, 409)
+        with Session(self.engine) as session:
+            self.assertEqual(session.get(Card, moving).local_version, 2)
+            self.assertEqual(len(list(session.scalars(select(models.CardLocationHistory).where(models.CardLocationHistory.card_id == moving)))), 1)
+
+    def test_move_reorders_within_cell_and_moves_between_lanes_and_empty_cells(self):
+        first, second, lane = self.seed_cards()
+        url = f'/api/v1/cards/{second}/move'
+        result = self.client.post(url, json={'version': 1, 'columnId': str(self.second), 'laneId': str(lane), 'beforeCardId': str(first)})
+        self.assertEqual(result.status_code, 200, result.text)
+        self.assertEqual([item['id'] for item in self.card_page(lane).json()['items']], [str(second), str(first)])
+        with Session(self.engine) as session:
+            other_lane = session.scalar(select(Lane.id).where(Lane.board_id == self.board_id, Lane.id != lane))
+            self.assertEqual(len(list(session.scalars(select(models.CardLocationHistory).where(models.CardLocationHistory.card_id == second)))), 0)
+        result = self.client.post(url, json={'version': 2, 'columnId': str(self.child), 'laneId': str(other_lane)})
+        self.assertEqual(result.status_code, 200, result.text)
+        detail = self.client.get(f'/api/v1/cards/{second}/detail').json()
+        self.assertEqual(detail['card']['lane']['id'], str(other_lane))
+        self.assertEqual(detail['card']['column']['id'], str(self.child))
+
+    def test_move_rejects_invalid_destination_anchor_and_archive_atomically(self):
+        first, second, lane = self.seed_cards()
+        url = f'/api/v1/cards/{first}/move'
+        body = {'version': 1, 'columnId': str(self.second), 'laneId': str(lane)}
+        for overrides, status in [({'columnId': str(self.parent)}, 400), ({'columnId': str(uuid4())}, 400),
+                                  ({'laneId': None}, 400), ({'laneId': str(uuid4())}, 400),
+                                  ({'beforeCardId': str(first)}, 400), ({'beforeCardId': str(uuid4())}, 409),
+                                  ({'beforeCardId': str(second), 'afterCardId': str(second)}, 400)]:
+            result = self.client.post(url, json=body | overrides)
+            self.assertEqual(result.status_code, status, result.text)
+        with Session(self.engine) as session, session.begin():
+            card = session.get(Card, first)
+            self.assertEqual(card.local_version, 1)
+            card.archived = True
+        self.assertEqual(self.client.post(url, json=body).status_code, 400)
+
     def test_move_next_preserves_lane_records_history_and_rejects_stale_retries(self):
         first, second, lane = self.seed_cards()
         with Session(self.engine) as session, session.begin():

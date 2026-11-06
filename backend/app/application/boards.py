@@ -36,6 +36,9 @@ class BoardService:
     def move_next(self, card_id, version, actor=None):
         return self.repository.move_next(card_id, version, actor)
 
+    def move_card(self, card_id, version, column_id, lane_id, before_id=None, after_id=None, actor=None):
+        return self.repository.move_card(card_id, version, column_id, lane_id, before_id, after_id, actor)
+
     def add_comment(self, card_id, request_id, text, attachments, actor=None):
         import base64
         import binascii

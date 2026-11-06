@@ -96,6 +96,13 @@ class MoveNext(BaseModel):
     version: int = Field(ge=1)
 
 
+class MoveCard(MoveNext):
+    columnId: UUID
+    laneId: UUID | None
+    beforeCardId: UUID | None = None
+    afterCardId: UUID | None = None
+
+
 class CommentFile(BaseModel):
     name: str = Field(min_length=1, max_length=255)
     data: str = Field(max_length=21 * 1024 * 1024)
@@ -186,6 +193,12 @@ def card_detail(card_id: UUID, service: Service):
 @images.post('/cards/{card_id}/move-next', response_model=CreatedCard)
 def move_next(card_id: UUID, body: MoveNext, service: Service, request: Request):
     return service.move_next(card_id, body.version, (request.state.identity or {}).get('userId'))
+
+
+@images.post('/cards/{card_id}/move', response_model=CreatedCard)
+def move_card(card_id: UUID, body: MoveCard, service: Service, request: Request):
+    return service.move_card(card_id, body.version, body.columnId, body.laneId,
+        body.beforeCardId, body.afterCardId, (request.state.identity or {}).get('userId'))
 
 
 @images.post('/cards/{card_id}/comments', response_model=CreatedCard, status_code=201)
