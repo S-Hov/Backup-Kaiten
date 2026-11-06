@@ -13,7 +13,7 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  background: var(--surface);
+  background: var(--chrome-bg, var(--surface));
   border-right: 1px solid var(--border);
 }
 .brandRow {

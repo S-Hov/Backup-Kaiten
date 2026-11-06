@@ -41,7 +41,7 @@
   gap: var(--space-9);
   padding: var(--space-16);
   box-shadow: inset -1px 0 var(--border);
-  border-top: 3px solid var(--border-accent);
+  border-top: var(--column-heading-border, 3px solid var(--border-accent));
 }
 .heading h2 {
   margin: 0;
@@ -54,6 +54,7 @@
   overflow-wrap: anywhere;
 }
 .columnMarker {
+  display: var(--column-marker-display, block);
   width: 7px;
   height: 7px;
   background: var(--accent);
@@ -189,7 +190,7 @@
   opacity: 0.5;
 }
 .cell:nth-child(2n) {
-  background: var(--bg);
+  background: var(--column-alternate-bg, var(--bg));
 }
 .empty {
   display: grid;
@@ -216,6 +217,8 @@
   width: max-content;
   min-width: 100%;
   align-items: stretch;
+  gap: var(--list-gap, 0px);
+  padding: var(--list-padding, 0px);
 }
 .listGroup {
   display: flex;
@@ -231,6 +234,7 @@
   display: flex;
   flex: 1;
   min-height: 0;
+  gap: var(--list-gap, 0px);
 }
 .listColumn {
   display: flex;
@@ -238,7 +242,9 @@
   width: var(--board-column-width);
   flex: 0 0 var(--board-column-width);
   min-height: 0;
-  border-right: 1px solid var(--border);
+  border: var(--list-column-border, 0);
+  border-right: var(--list-column-border, 1px solid var(--border));
+  border-radius: var(--list-column-radius, 0px);
   background: var(--surface-muted);
 }
 .listColumn > .headingGroup {
@@ -246,6 +252,8 @@
 }
 .listColumn .heading {
   height: auto;
+  min-height: var(--list-heading-height, 66px);
+  padding: var(--list-heading-padding, var(--space-16));
 }
 .columnCards {
   min-height: 0;
@@ -265,6 +273,7 @@
   width: 100%;
   box-shadow: none;
   border-bottom: 0;
+  padding: var(--list-cell-padding, var(--space-10));
 }
 .columnCards .cell > article {
   flex-shrink: 0;

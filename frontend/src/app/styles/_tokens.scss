@@ -314,6 +314,126 @@
   --scrollbar-track: #0d1117;
 }
 
+// Original Kaiten palettes sampled from the supplied board screenshots.
+:root[data-theme="kaiten-light"],
+[data-theme-preview="kaiten-light"] {
+  color-scheme: light;
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-subtle: #fbfcfd;
+  --surface-muted: #f8f9fb;
+  --surface-hover: #ced2d2;
+  --text: #424242;
+  --text-strong: #202020;
+  --text-secondary: #757979;
+  --text-muted: #999999;
+  --text-inverse: #ffffff;
+  --border: #e4e7ec;
+  --border-subtle: #e4e7ec;
+  --border-strong: #cccccf;
+  --border-accent: #e1bee7;
+  --accent: #9c27b0;
+  --accent-contrast: #ffffff;
+  --accent-hover: #8e24aa;
+  --accent-soft: #f3e5f5;
+  --accent-muted: #ce93d8;
+  --accent-text: #7b1fa2;
+  --success: #388e3c;
+  --success-soft: #c8e6c9;
+  --warning: #a16a17;
+  --warning-soft: #ffe0b2;
+  --danger: #c62828;
+  --danger-soft: #ffcdd2;
+  --info: #1976d2;
+  --info-soft: #bbdefb;
+  --overlay: #00000080;
+  --shadow-color: #00000020;
+  --focus-color: #9c27b040;
+  --skeleton: #e4e7ec;
+  --scrollbar-thumb: #cccccf;
+  --scrollbar-track: #f0f0f3;
+  --chrome-bg: #ebefef;
+  --header-bg: #ffffff;
+  --toolbar-bg: #f1f3f4;
+  --toolbar-border: #d5dadd;
+  --control-bg: #e1e5e7;
+  --date-control-bg: var(--control-bg);
+  --control-text: #42474b;
+  --control-hover-bg: #d3dadd;
+  --control-outline: #c7ced2;
+  --view-active-bg: #cfd8dc;
+  --view-active-text: #20272b;
+  --search-bg: #ffffff;
+  --search-border: #c4ccd1;
+  --search-placeholder: #626b73;
+  --search-focus-bg: #ffffff;
+  --search-focus-shadow: 0 0 0 3px var(--focus-color);
+}
+
+:root[data-theme="kaiten-dark"],
+[data-theme-preview="kaiten-dark"] {
+  color-scheme: dark;
+  --bg: #212121;
+  --surface: #424242;
+  --surface-subtle: #474747;
+  --surface-muted: #303030;
+  --surface-hover: #565656;
+  --text: #eeeeee;
+  --text-strong: #eeeeee;
+  --text-secondary: #bdbdbd;
+  --text-muted: #999999;
+  --text-inverse: #ffffff;
+  --border: #424242;
+  --border-subtle: #565656;
+  --border-strong: #757575;
+  --border-accent: #565656;
+  --accent: #ab47bc;
+  --accent-contrast: #ffffff;
+  --accent-hover: #ba68c8;
+  --accent-soft: #4a354e;
+  --accent-muted: #ce93d8;
+  --accent-text: #e1bee7;
+  --success: #a5d6a7;
+  --success-soft: #2e4930;
+  --warning: #ffe0b2;
+  --warning-soft: #504330;
+  --danger: #ef9a9a;
+  --danger-soft: #503237;
+  --info: #90caf9;
+  --info-soft: #304658;
+  --overlay: #000000b3;
+  --shadow-color: #00000040;
+  --focus-color: #ab47bc60;
+  --skeleton: #565656;
+  --scrollbar-thumb: #999999;
+  --scrollbar-track: #424242;
+  --chrome-bg: #2d2d2d;
+  --control-bg: #474747;
+  --search-bg: #424242;
+}
+
+// Theme-specific component roles also apply to the picker previews.
+:root[data-theme="kaiten-light"],
+:root[data-theme="kaiten-dark"],
+[data-theme-preview="kaiten-light"],
+[data-theme-preview="kaiten-dark"] {
+  --font-sans: Arial, sans-serif;
+  --shadow-card: none;
+  --card-cover-bg: var(--surface);
+  --card-cover-border: transparent;
+  --tag-radius: 12px;
+  --column-alternate-bg: var(--surface-muted);
+  --column-heading-border: 0;
+  --column-marker-display: none;
+  --list-gap: 8px;
+  --list-padding: 8px;
+  --list-column-border: 1px solid var(--border);
+  --list-column-radius: 6px;
+  --list-heading-height: 36px;
+  --list-heading-padding: 8px;
+  --list-cell-padding: 0 8px 8px;
+}
+
 // Tag colors identify labels and remain the same in every theme.
 :root {
   --tag-color-1-bg: hsl(4 65% 91%);

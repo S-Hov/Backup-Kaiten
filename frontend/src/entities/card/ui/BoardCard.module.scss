@@ -37,8 +37,8 @@
   width: 100%;
   height: 150px;
   object-fit: contain;
-  background: var(--surface-muted);
-  border-bottom: 1px solid var(--border-subtle);
+  background: var(--card-cover-bg, var(--surface-muted));
+  border-bottom: 1px solid var(--card-cover-border, var(--border-subtle));
 }
 .missingCover {
   padding: var(--space-20);
@@ -57,7 +57,7 @@
   list-style: none;
 }
 .tags li {
-  border-radius: var(--radius-sm);
+  border-radius: var(--tag-radius, var(--radius-sm));
   padding: var(--space-3) var(--space-6);
   font-size: var(--font-size-10);
   font-weight: var(--font-weight-medium);

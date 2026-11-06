@@ -1,6 +1,8 @@
 import { useSyncExternalStore } from "react";
 
 export const themes = [
+  { id: "kaiten-light", label: "Kaiten Светлая" },
+  { id: "kaiten-dark", label: "Kaiten Тёмная" },
   { id: "light", label: "Светлая" },
   { id: "warm", label: "Бумажная" },
   { id: "dark", label: "Тёмная" },

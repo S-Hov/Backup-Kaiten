@@ -9,8 +9,8 @@
   align-items: center;
   gap: var(--space-20);
   padding: var(--space-8) var(--space-20);
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  background: var(--header-bg, var(--chrome-bg, var(--surface)));
+  border-bottom: 1px solid var(--toolbar-border, var(--border));
 }
 .location {
   display: flex;
@@ -33,15 +33,17 @@
   display: flex;
   align-items: center;
   gap: var(--space-8);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--search-border, var(--border-subtle));
   border-radius: var(--radius-md);
-  background: var(--surface-muted);
-  color: var(--text-muted);
+  background: var(--search-bg, var(--surface-muted));
+  color: var(--search-placeholder, var(--text-muted));
   padding: var(--space-7) var(--space-10);
   min-width: 0;
 }
 .search:focus-within {
   border-color: var(--accent-muted);
+  background: var(--search-focus-bg, var(--search-bg, var(--surface-muted)));
+  box-shadow: var(--search-focus-shadow, none);
 }
 .search input {
   font-size: var(--font-size-12);
@@ -53,7 +55,7 @@
   outline: none;
 }
 .search input::placeholder {
-  color: var(--text-muted);
+  color: var(--search-placeholder, var(--text-muted));
 }
 .search input::-webkit-search-cancel-button {
   display: none;
@@ -69,8 +71,8 @@
   align-items: center;
   gap: var(--space-8);
   padding: var(--space-7) var(--space-12);
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  background: var(--toolbar-bg, var(--chrome-bg, var(--surface)));
+  border-bottom: 1px solid var(--toolbar-border, var(--border));
 }
 .toolbar button {
   display: inline-flex;
@@ -88,19 +90,19 @@
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-3);
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-outline, var(--border));
   border-radius: var(--radius-lg);
 }
 .views button {
-  color: var(--text-secondary);
+  color: var(--control-text, var(--text-secondary));
 }
 .views button[aria-pressed="true"] {
-  background: var(--surface-hover);
-  color: var(--text-strong);
+  background: var(--view-active-bg, var(--surface-hover));
+  color: var(--view-active-text, var(--text-strong));
 }
 .views button:hover,
 .archive:hover {
-  background: var(--surface-muted);
+  background: var(--control-hover-bg, var(--surface-muted));
 }
 .divider {
   height: 22px;
@@ -109,8 +111,9 @@
   margin: 0 var(--space-4);
 }
 .archive {
-  background: var(--surface-muted);
-  color: var(--text-secondary);
+  background: var(--control-bg, var(--surface-muted));
+  color: var(--control-text, var(--text-secondary));
+  box-shadow: inset 0 0 0 1px var(--control-outline, transparent);
 }
 .toolbar .activeArchive {
   background: var(--accent-soft);
@@ -312,9 +315,14 @@
   cursor: pointer;
   padding: var(--space-8) var(--space-10);
   border-radius: var(--radius-md);
-  background: var(--surface-muted);
+  background: var(--date-control-bg, var(--surface-muted));
+  color: var(--control-text, inherit);
+  box-shadow: inset 0 0 0 1px var(--control-outline, transparent);
   font-size: var(--font-size-12);
   white-space: nowrap;
+}
+.dateFilter summary:hover {
+  background: var(--control-hover-bg, var(--surface-muted));
 }
 .dateFilter form {
   position: fixed;
