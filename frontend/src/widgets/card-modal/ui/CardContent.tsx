@@ -1,14 +1,21 @@
 import { Icon } from "@/shared/ui/icon";
 import { useState } from "react";
-import { CardTags } from "@/entities/card";
 import type { CardDetail } from "@/entities/card";
-import { Avatar, Disclosure, Value } from "@/shared/ui";
+import { Disclosure, Value } from "@/shared/ui";
 import { Attachments, ImagePreview } from "@/shared/ui/files";
 import { RichText } from "@/shared/ui/rich-text";
 import { safeLink } from "@/shared/lib/rich-text";
 import { formatDate } from "@/shared/lib/format";
 import { CardTimeline } from "./CardTimeline";
 import { CardMove } from "./CardMove";
+import { InlineField, inputDate, savedDate } from "./InlineField";
+import { InlineSelection } from "./InlineSelection";
+import {
+  CatalogField,
+  LocationField,
+  CardPropertyFields,
+} from "./CardEditableFields";
+import { useCardEditing } from "./CardEditing";
 import styles from "./CardModal.module.scss";
 
 function Section({
@@ -50,6 +57,7 @@ export function CardContent({
 }) {
   const [preview, setPreview] = useState<string | null>(null);
   const card = model.card;
+  const editing = useCardEditing();
   const files = model.files
     .filter((file) => !file.deleted)
     .map((file) => ({
@@ -64,43 +72,77 @@ export function CardContent({
         className={`${styles.columns} ${panelHidden ? styles.panelHidden : ""}`}
       >
         <div className={styles.main}>
-          <CardMove card={card} />
-          <CardTags tags={model.tags} />
+          <CardMove card={card} disabled={!!editing.active} />
+          <InlineSelection kind="tags" label="Теги" selected={model.tags} />
           <dl className={styles.fields}>
-            <Field label="Тип">{card.type?.name || "Карточка"}</Field>
+            <Field label="Тип">
+              <CatalogField id="type" label="Тип" value={card.type?.id || ""}>
+                {card.type?.name || "Карточка"}
+              </CatalogField>
+            </Field>
+            <Field label="Колонка">
+              <LocationField field="column" />
+            </Field>
             <Field label="Дорожка">
-              {card.lane?.title || "Основная дорожка"}
+              <LocationField field="lane" />
             </Field>
             <Field label="Создатель">{card.owner?.name}</Field>
-            <Field label="Срок">{formatDate(card.dueDate)}</Field>
+            <Field label="Срок">
+              <InlineField
+                id="dueDate"
+                label="Срок"
+                kind="date"
+                value={inputDate(card.dueDate)}
+                toChanges={(value) => ({ dueDate: savedDate(value) })}
+              >
+                {card.dueDate ? formatDate(card.dueDate) : "Указать срок"}
+              </InlineField>
+            </Field>
+            <Field label="Приоритет">
+              <InlineField
+                id="asap"
+                label="Приоритет"
+                kind="select"
+                value={String(card.asap)}
+                options={[
+                  { id: "false", name: "Обычный" },
+                  { id: "true", name: "Срочно" },
+                ]}
+                toChanges={(value) => ({ asap: value === "true" })}
+              >
+                {card.asap ? "Срочно" : "Обычный"}
+              </InlineField>
+            </Field>
             <Field label="Участники">
-              <div className={styles.members}>
-                {model.members.map((member) => (
-                  <span
-                    key={`${member.id}:${member.role}`}
-                    title={member.email || undefined}
-                  >
-                    <Avatar label={member.name} src={member.avatarUrl} />
-                    {member.name}
-                    {member.role === 2 && (
-                      <b title="Ответственный">
-                        <Icon name="star" size={14} />
-                      </b>
-                    )}
-                  </span>
-                ))}
-                {!model.members.length && "Не назначены"}
-              </div>
+              <InlineSelection
+                kind="members"
+                label="Участники"
+                selected={model.members}
+              />
             </Field>
             <Field label="Размер">
-              {card.sizeText ||
-                (card.size ? `${card.size} ${card.sizeUnit || ""}` : null)}
+              <InlineField
+                id="sizeText"
+                label="Размер"
+                value={
+                  card.sizeText ||
+                  (card.size
+                    ? `${card.size} ${card.sizeUnit || ""}`.trim()
+                    : "")
+                }
+                toChanges={(value) => ({
+                  sizeText: value || null,
+                  size: null,
+                  sizeUnit: null,
+                })}
+              >
+                {card.sizeText ||
+                  (card.size
+                    ? `${card.size} ${card.sizeUnit || ""}`
+                    : "Указать размер")}
+              </InlineField>
             </Field>
-            {model.properties.map((property) => (
-              <Field key={property.id} label={property.name}>
-                <Value value={property.value} />
-              </Field>
-            ))}
+            <CardPropertyFields properties={model.properties} />
           </dl>
           {model.blockers
             .filter((item) => !item.released)
@@ -110,11 +152,19 @@ export function CardContent({
               </div>
             ))}
           <Section title="Описание">
-            <RichText
-              text={card.description}
-              imageMap={model.imageMap}
-              onPreview={setPreview}
-            />
+            <InlineField
+              id="description"
+              label="Описание"
+              kind="rich"
+              value={card.description}
+              toChanges={(description) => ({ description })}
+            >
+              <RichText
+                text={card.description}
+                imageMap={model.imageMap}
+                onPreview={setPreview}
+              />
+            </InlineField>
           </Section>
           {model.checklists.map((checklist) => {
             const items = checklist.items.filter((item) => !item.deleted);
@@ -131,18 +181,40 @@ export function CardContent({
                 />
                 {items.map((item) => (
                   <div className={styles.checkItem} key={item.id}>
-                    <span
-                      className={styles.checkbox}
-                      aria-label={item.checked ? "Выполнено" : "Не выполнено"}
-                    >
-                      {item.checked && <Icon name="check" size={14} />}
-                    </span>
+                    <input
+                      type="checkbox"
+                      checked={item.checked}
+                      aria-label={`Выполнено: ${item.text.replace(/<[^>]*>/g, "").slice(0, 100)}`}
+                      disabled={
+                        !editing.enabled || !!editing.active || editing.pending
+                      }
+                      onChange={(event) =>
+                        editing.save({
+                          version: card.version,
+                          changes: {
+                            checklistItems: [
+                              { id: item.id, checked: event.target.checked },
+                            ],
+                          },
+                        })
+                      }
+                    />
                     <div>
-                      <RichText
-                        text={item.text}
-                        imageMap={model.imageMap}
-                        onPreview={setPreview}
-                      />
+                      <InlineField
+                        id={`checklist:${item.id}`}
+                        label="Пункт чек-листа"
+                        kind="rich"
+                        value={item.text}
+                        toChanges={(text) => ({
+                          checklistItems: [{ id: item.id, text }],
+                        })}
+                      >
+                        <RichText
+                          text={item.text}
+                          imageMap={model.imageMap}
+                          onPreview={setPreview}
+                        />
+                      </InlineField>
                       {(item.dueDate || item.responsible) && (
                         <small>
                           {item.responsible?.name}{" "}
@@ -211,20 +283,48 @@ export function CardContent({
                   ["Создана", card.created],
                   ["Обновлена", card.updated],
                   ["Перемещена", card.lastMoved],
-                  ["Завершена", card.completedAt],
-                  ["Плановое начало", card.plannedStart],
-                  ["Плановое окончание", card.plannedEnd],
                 ] as const
               ).map(([label, date]) => (
                 <Field key={label} label={label}>
                   {formatDate(date)}
                 </Field>
               ))}
+              {(
+                [
+                  ["Завершена", "completedAt"],
+                  ["Плановое начало", "plannedStart"],
+                  ["Плановое окончание", "plannedEnd"],
+                ] as const
+              ).map(([label, key]) => (
+                <Field key={key} label={label}>
+                  <InlineField
+                    id={key}
+                    label={label}
+                    kind="date"
+                    value={inputDate(card[key])}
+                    toChanges={(value) => ({ [key]: savedDate(value) })}
+                  >
+                    {card[key] ? formatDate(card[key]) : "Указать дату"}
+                  </InlineField>
+                </Field>
+              ))}
               <Field label="Подписчики">
-                {model.subscribers.map((person) => person.name).join(", ") ||
-                  "Нет"}
+                <InlineSelection
+                  kind="subscribers"
+                  label="Подписчики"
+                  selected={model.subscribers}
+                />
               </Field>
-              <Field label="Внешний ID">{card.externalId}</Field>
+              <Field label="Внешний ID">
+                <InlineField
+                  id="externalId"
+                  label="Внешний ID"
+                  value={card.externalId || ""}
+                  toChanges={(value) => ({ externalId: value || null })}
+                >
+                  {card.externalId || "Указать ID"}
+                </InlineField>
+              </Field>
               <Field label="Версия">{String(card.version)}</Field>
             </dl>
             {!!model.blockers.length && (

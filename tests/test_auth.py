@@ -138,6 +138,8 @@ class AuthTests(unittest.TestCase):
         self.assertEqual(self.client.get('/api/v1/auth/users').status_code, 403)
         self.assertEqual(self.client.post('/api/v1/auth/logout').status_code, 403)
         self.assertEqual(self.post('/boards/'+str(uuid4())+'/cards', {'title':'Not allowed','columnId':str(uuid4()),'requestId':str(uuid4())}).status_code, 403)
+        self.assertEqual(self.post('/cards/'+str(uuid4())+'/edit', {'version': 1, 'title': 'Not allowed'}).status_code, 403)
+        self.assertEqual(self.post('/boards/'+str(uuid4())+'/tags', {'name': 'Not allowed', 'requestId': str(uuid4())}).status_code, 403)
         self.assertEqual(self.client.post('/api/v1/auth/login', json={'email':'admin@example.test','password':PASSWORD},headers={'Origin':'https://evil.example'}).status_code, 403)
         self.assertEqual(self.post('/auth/logout-all').status_code, 200)
 

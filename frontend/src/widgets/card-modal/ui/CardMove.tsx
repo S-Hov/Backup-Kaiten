@@ -7,7 +7,13 @@ import { notify } from "@/shared/ui/notifications";
 import { useSession } from "@/entities/session";
 import styles from "./CardModal.module.scss";
 
-export function CardMove({ card }: { card: CardDetail["card"] }) {
+export function CardMove({
+  card,
+  disabled = false,
+}: {
+  card: CardDetail["card"];
+  disabled?: boolean;
+}) {
   const account = useSession();
   const boardId = card.board?.id || "";
   const structure = useQuery({
@@ -48,6 +54,7 @@ export function CardMove({ card }: { card: CardDetail["card"] }) {
       <button
         className={styles.moveButton}
         disabled={
+          disabled ||
           !next ||
           card.archived ||
           account?.role === "viewer" ||

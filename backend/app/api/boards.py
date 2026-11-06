@@ -3,7 +3,7 @@ from typing import Any, Literal
 from datetime import date
 from uuid import UUID
 from fastapi import APIRouter, Depends, Request, Query, HTTPException
-from pydantic import BaseModel, StringConstraints, Field, ValidationError
+from pydantic import BaseModel, StringConstraints, Field, ValidationError, AwareDatetime, ConfigDict, model_validator
 from starlette.concurrency import run_in_threadpool
 from starlette.responses import FileResponse
 from backend.app.application.boards import BoardService
@@ -103,6 +103,68 @@ class MoveCard(MoveNext):
     afterCardId: UUID | None = None
 
 
+class UpdateCard(MoveNext):
+    model_config = ConfigDict(extra='forbid')
+    title: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)] | None = None
+    description: Annotated[str, StringConstraints(max_length=100000)] | None = None
+    dueDate: AwareDatetime | None = None
+    asap: bool | None = Field(default=None, strict=True)
+    tagIds: list[UUID] | None = Field(default=None, max_length=200)
+    members: list['EditMember'] | None = Field(default=None, max_length=200)
+    subscriberIds: list[UUID] | None = Field(default=None, max_length=200)
+    typeId: UUID | None = None
+    sizeText: Annotated[str, StringConstraints(max_length=500)] | None = None
+    size: Annotated[str, StringConstraints(max_length=100)] | None = None
+    sizeUnit: Annotated[str, StringConstraints(max_length=100)] | None = None
+    externalId: Annotated[str, StringConstraints(max_length=500)] | None = None
+    plannedStart: AwareDatetime | None = None
+    plannedEnd: AwareDatetime | None = None
+    completedAt: AwareDatetime | None = None
+    properties: list['EditProperty'] | None = Field(default=None, max_length=200)
+    checklistItems: list['EditChecklistItem'] | None = Field(default=None, max_length=200)
+
+    @model_validator(mode='after')
+    def validate_changes(self):
+        if not self.model_fields_set - {'version'}:
+            raise ValueError('Измените хотя бы одно поле')
+        for name in ('title', 'description', 'asap', 'tagIds', 'members', 'subscriberIds', 'properties', 'checklistItems'):
+            if name in self.model_fields_set and getattr(self, name) is None:
+                raise ValueError(f'Поле {name} не может быть null')
+        return self
+
+
+class EditMember(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    id: UUID
+    role: Literal[1, 2] = 1
+
+
+class EditProperty(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    id: UUID
+    value: Any
+
+
+class EditChecklistItem(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    id: UUID
+    text: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=20000)] | None = None
+    checked: bool | None = Field(default=None, strict=True)
+
+
+UpdateCard.model_rebuild()
+
+
+class NewTag(BaseModel):
+    name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
+    requestId: UUID
+
+
+class CardEditOptions(BoardFilterOptions):
+    types: list[dict[str, Any]]
+    properties: list[dict[str, Any]]
+
+
 class CommentFile(BaseModel):
     name: str = Field(min_length=1, max_length=255)
     data: str = Field(max_length=21 * 1024 * 1024)
@@ -160,6 +222,16 @@ def filter_options(board_id: UUID, service: Service):
     return service.filter_options(board_id)
 
 
+@router.get('/{board_id}/edit-options', response_model=CardEditOptions)
+def edit_options(board_id: UUID, service: Service):
+    return service.edit_options(board_id)
+
+
+@router.post('/{board_id}/tags', response_model=CardTag)
+def create_tag(board_id: UUID, body: NewTag, service: Service):
+    return service.create_tag(board_id, body.name, body.requestId)
+
+
 @router.get('/{board_id}/cards', response_model=CardPage)
 def cards(board_id: UUID, column_id: UUID, service: Service, lane_id: UUID | None = None,
           limit: Annotated[int, Query(ge=1, le=100)] = 30,
@@ -199,6 +271,12 @@ def move_next(card_id: UUID, body: MoveNext, service: Service, request: Request)
 def move_card(card_id: UUID, body: MoveCard, service: Service, request: Request):
     return service.move_card(card_id, body.version, body.columnId, body.laneId,
         body.beforeCardId, body.afterCardId, (request.state.identity or {}).get('userId'))
+
+
+@images.post('/cards/{card_id}/edit', response_model=CreatedCard)
+def update_card(card_id: UUID, body: UpdateCard, service: Service, request: Request):
+    return service.update_card(card_id, body.version, body.model_dump(exclude_unset=True, exclude={'version'}),
+        (request.state.identity or {}).get('userId'))
 
 
 @images.post('/cards/{card_id}/comments', response_model=CreatedCard, status_code=201)

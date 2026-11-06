@@ -2,6 +2,18 @@ import { describe, expect, it } from "vitest";
 import { renderRichText, safeAssetURL, safeLink } from "./index";
 
 describe("archived rich text", () => {
+  it("retains local images when a rendered description is edited and saved", () => {
+    const local =
+      "/api/v1/attachments/11111111-1111-4111-8111-111111111111/content";
+    const first = renderRichText(
+      '<p>Макет <img src="https://files.example/file.png"></p>',
+      { "https://files.example/file.png": local },
+    );
+    const edited = renderRichText(`<div>${first}<p>Уточнение</p></div>`, {});
+    expect(edited).toContain(`src="${local}"`);
+    expect(edited).toContain("Уточнение");
+    expect(edited).not.toContain("Изображение не сохранено");
+  });
   it("supports working attachment URLs and keeps traversal and active image types blocked", () => {
     const url =
       "/api/v1/attachments/11111111-1111-4111-8111-111111111111/content";

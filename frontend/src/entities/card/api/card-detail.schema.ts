@@ -32,7 +32,11 @@ export const cardDetailSchema = z.looseObject({
     column: location,
     lane: location,
     type: z
-      .looseObject({ name: z.string(), letter: z.string().nullable() })
+      .looseObject({
+        id: z.string().optional(),
+        name: z.string(),
+        letter: z.string().nullable(),
+      })
       .nullable(),
     owner: person.nullable(),
     archived: z.boolean(),

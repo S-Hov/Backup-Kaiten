@@ -6,6 +6,8 @@ import { notify } from "@/shared/ui/notifications";
 import { Icon } from "@/shared/ui/icon";
 import { useStoredFlag } from "@/shared/lib/use-stored-flag";
 import { CardContent } from "./CardContent";
+import { CardEditingProvider, useCardEditing } from "./CardEditing";
+import { InlineField } from "./InlineField";
 import styles from "./CardModal.module.scss";
 
 export function CardModal({
@@ -18,6 +20,24 @@ export function CardModal({
   onOpen: (id: string) => void;
 }) {
   const detail = useQuery(cardQueries.detail(cardId));
+  return (
+    <CardEditingProvider key={cardId} model={detail.data} onClose={onClose}>
+      <CardWindow cardId={cardId} onClose={onClose} onOpen={onOpen} />
+    </CardEditingProvider>
+  );
+}
+
+function CardWindow({
+  cardId,
+  onClose,
+  onOpen,
+}: {
+  cardId: string;
+  onClose: () => void;
+  onOpen: (id: string) => void;
+}) {
+  const detail = useQuery(cardQueries.detail(cardId));
+  const editing = useCardEditing();
   const [fullscreen, toggleFullscreen] = useStoredFlag("card-modal.fullscreen");
   const [panelHidden, togglePanel] = useStoredFlag("card-modal.panel-hidden");
   const card = detail.data?.card;
@@ -42,6 +62,8 @@ export function CardModal({
       labelledBy="working-card-title"
       onClose={onClose}
       fullscreen={fullscreen}
+      dismissible={!editing.pending}
+      beforeClose={editing.beforeClose}
       actions={
         <>
           <button
@@ -73,7 +95,16 @@ export function CardModal({
         </>
       }
     >
-      <div className={styles.layout}>
+      <div
+        className={styles.layout}
+        onKeyDown={(event) => {
+          if (event.key === "Escape" && editing.active) {
+            event.preventDefault();
+            event.stopPropagation();
+            editing.cancel();
+          }
+        }}
+      >
         <header className={styles.header}>
           <div className={styles.breadcrumb}>
             {card?.board?.title || "Доска"}
@@ -96,13 +127,28 @@ export function CardModal({
               </button>
             )}
           </div>
-          <h1 id="working-card-title">
-            {card
-              ? card.title || "Без названия"
-              : detail.isError
+          {card ? (
+            <div
+              id="working-card-title"
+              aria-label={card.title || "Без названия"}
+            >
+              <InlineField
+                id="title"
+                label="Название"
+                value={card.title}
+                kind="title"
+                toChanges={(title) => ({ title })}
+              >
+                <h1>{card.title || "Без названия"}</h1>
+              </InlineField>
+            </div>
+          ) : (
+            <h1 id="working-card-title">
+              {detail.isError
                 ? "Не удалось открыть карточку"
                 : "Загрузка карточки…"}
-          </h1>
+            </h1>
+          )}
         </header>
         {detail.isPending ? (
           <p className={styles.state} role="status">
@@ -119,11 +165,14 @@ export function CardModal({
           <CardContent
             key={detail.data.card.id}
             model={detail.data}
-            onOpen={onOpen}
+            onOpen={(id) => {
+              if (editing.beforeClose()) onOpen(id);
+            }}
             panelHidden={panelHidden}
           />
         )}
       </div>
+      {editing.feedback}
     </Modal>
   );
 }

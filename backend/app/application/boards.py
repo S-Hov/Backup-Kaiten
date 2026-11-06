@@ -18,6 +18,12 @@ class BoardService:
     def filter_options(self, board_id: UUID):
         return self.repository.filter_options(board_id)
 
+    def edit_options(self, board_id):
+        return self.repository.edit_options(board_id)
+
+    def create_tag(self, board_id, name, request_id):
+        return self.repository.create_tag(board_id, name, request_id)
+
     def cards(self, board_id, column_id, lane_id, limit, cursor, archived=False, query='', tag_id=None, user_id=None, date_field='created', date_from=None, date_to=None, timezone_offset=0):
         return self.repository.cards(board_id, column_id, lane_id, limit, cursor, archived, query, tag_id, user_id, date_field, date_from, date_to, timezone_offset)
 
@@ -35,6 +41,9 @@ class BoardService:
 
     def move_next(self, card_id, version, actor=None):
         return self.repository.move_next(card_id, version, actor)
+
+    def update_card(self, card_id, version, changes, actor=None):
+        return self.repository.update_card(card_id, version, changes, actor)
 
     def move_card(self, card_id, version, column_id, lane_id, before_id=None, after_id=None, actor=None):
         return self.repository.move_card(card_id, version, column_id, lane_id, before_id, after_id, actor)

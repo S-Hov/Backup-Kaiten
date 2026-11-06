@@ -5,7 +5,7 @@ import json
 import re
 from decimal import Decimal, localcontext
 from uuid import UUID, uuid5
-from sqlalchemy import select, and_, or_, func, cast, String
+from sqlalchemy import select, and_, or_, func, cast, String, case
 from sqlalchemy.orm import Session
 from .board_models import Board, Column, Lane, Card, CardTag, Tag, Attachment, FileObject
 from .board_models import CardMember, User
@@ -97,7 +97,8 @@ class SqlBoardRepository:
             for identifier in set(user_id or []):
                 statement = statement.where(Card.id.in_(select(CardMember.card_id).where(CardMember.user_id == identifier)))
             date_column = {'created': func.coalesce(Card.source_created_at, Card.created_at),
-                           'updated': func.coalesce(Card.source_updated_at, Card.updated_at), 'due': Card.due_date}[date_field]
+                           'updated': case((Card.local_version > 1, Card.updated_at),
+                                           else_=func.coalesce(Card.source_updated_at, Card.updated_at)), 'due': Card.due_date}[date_field]
             local_timezone = timezone(timedelta(minutes=-timezone_offset))
             if date_from:
                 start = datetime.combine(date_from, time.min, local_timezone).astimezone(timezone.utc)
@@ -174,6 +175,18 @@ class SqlBoardRepository:
     def move_next(self, card_id, version, actor=None):
         from .card_operations import move_next
         return move_next(self.engine, card_id, version, actor)
+
+    def update_card(self, card_id, version, changes, actor=None):
+        from .card_editing import update_card
+        return update_card(self.engine, card_id, version, changes, actor)
+
+    def edit_options(self, board_id):
+        from .card_editing import edit_options
+        return edit_options(self.engine, board_id)
+
+    def create_tag(self, board_id, name, request_id):
+        from .card_editing import create_tag
+        return create_tag(self.engine, board_id, name, request_id)
 
     def move_card(self, card_id, version, column_id, lane_id, before_id=None, after_id=None, actor=None):
         from .card_operations import move_card

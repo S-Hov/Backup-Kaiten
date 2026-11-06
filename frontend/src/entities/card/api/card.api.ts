@@ -17,7 +17,54 @@ export interface NewCard {
   columnId: string;
   laneId: string | null;
 }
+export interface CardChanges {
+  version: number;
+  title?: string;
+  description?: string;
+  dueDate?: string | null;
+  asap?: boolean;
+  tagIds?: string[];
+  members?: { id: string; role: 1 | 2 }[];
+  subscriberIds?: string[];
+  typeId?: string | null;
+  sizeText?: string | null;
+  size?: string | null;
+  sizeUnit?: string | null;
+  externalId?: string | null;
+  plannedStart?: string | null;
+  plannedEnd?: string | null;
+  completedAt?: string | null;
+  properties?: { id: string; value: z.infer<ReturnType<typeof z.json>> }[];
+  checklistItems?: { id: string; text?: string; checked?: boolean }[];
+}
+const editOption = z.object({ id: z.string(), name: z.string() });
+export const cardEditOptionsSchema = z.object({
+  tags: z.array(editOption.extend({ color: z.string().nullable() })),
+  users: z.array(
+    editOption.extend({ avatarUrl: z.string().nullable().optional() }),
+  ),
+  types: z.array(editOption),
+  properties: z.array(
+    editOption.extend({ type: z.string(), options: z.array(editOption) }),
+  ),
+});
+export type CardEditOptions = z.infer<typeof cardEditOptionsSchema>;
 export const cardApi = {
+  editOptions: (boardId: string, signal?: AbortSignal) =>
+    apiClient(`/boards/${boardId}/edit-options`, cardEditOptionsSchema, {
+      signal,
+    }),
+  createTag: (boardId: string, body: { name: string; requestId: string }) =>
+    apiClient(
+      `/boards/${boardId}/tags`,
+      editOption.extend({ color: z.string().nullable() }),
+      { method: "POST", body },
+    ),
+  update: (id: string, body: CardChanges) =>
+    apiClient(`/cards/${id}/edit`, z.object({ id: z.uuid() }), {
+      method: "POST",
+      body,
+    }),
   move: (
     id: string,
     body: {

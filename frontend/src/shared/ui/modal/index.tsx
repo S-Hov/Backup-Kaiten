@@ -12,6 +12,7 @@ export function Modal({
   size = "large",
   fullscreen = false,
   actions,
+  beforeClose,
 }: {
   children: React.ReactNode;
   labelledBy: string;
@@ -21,6 +22,7 @@ export function Modal({
   size?: "large" | "compact";
   fullscreen?: boolean;
   actions?: React.ReactNode;
+  beforeClose?: () => boolean;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -38,7 +40,9 @@ export function Modal({
       data-size={size}
       data-fullscreen={fullscreen}
       onCancel={(event) => {
-        if (!dismissible) event.preventDefault();
+        if (event.target !== event.currentTarget) return;
+        if (!dismissible || (beforeClose && !beforeClose()))
+          event.preventDefault();
       }}
       aria-labelledby={labelledBy}
       onClose={(event) => {
@@ -54,13 +58,15 @@ export function Modal({
           event.clientY < bounds.top ||
           event.clientY > bounds.bottom
         )
-          event.currentTarget.close();
+          if (!beforeClose || beforeClose()) event.currentTarget.close();
       }}
     >
       <div className={actions ? styles.controls : undefined}>
         <button
           className={styles.close}
-          onClick={() => dialog.current?.close()}
+          onClick={() => {
+            if (!beforeClose || beforeClose()) dialog.current?.close();
+          }}
           aria-label={closeLabel}
           disabled={!dismissible}
           autoFocus

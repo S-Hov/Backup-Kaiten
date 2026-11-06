@@ -33,6 +33,8 @@ function imageURL(
   url: string,
   imageMap: Record<string, string>,
 ): string | null {
+  const local = safeAssetURL(url);
+  if (local) return local;
   if (
     /^data:image\/(?:png|jpeg|jpg|gif|webp|bmp);base64,[a-z0-9+/=\s]+$/i.test(
       url,

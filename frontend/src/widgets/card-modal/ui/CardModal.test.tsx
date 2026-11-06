@@ -37,6 +37,34 @@ function wrap(children: React.ReactNode) {
   });
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
+it("edits the title in place without a separate edit button or dialog", async () => {
+  const model = cardDetailFixture();
+  vi.spyOn(globalThis, "fetch").mockResolvedValue(
+    new Response(JSON.stringify(model)),
+  );
+  const close = vi.fn();
+  render(
+    wrap(<CardModal cardId={model.card.id} onClose={close} onOpen={vi.fn()} />),
+  );
+  await userEvent.click(
+    await screen.findByRole("heading", { name: "Заказ на кружки" }),
+  );
+  expect(
+    screen.queryByRole("button", { name: "Редактировать" }),
+  ).not.toBeInTheDocument();
+  expect(screen.getAllByRole("dialog")).toHaveLength(1);
+  expect(screen.getByRole("textbox", { name: "Название" })).toHaveValue(
+    "Заказ на кружки",
+  );
+  await userEvent.click(screen.getByRole("button", { name: "Отмена" }));
+  expect(
+    screen.queryByRole("textbox", { name: "Название" }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.getByRole("dialog", { name: "Заказ на кружки" }),
+  ).toBeInTheDocument();
+  expect(close).not.toHaveBeenCalled();
+});
 it("loads details, renders sections, opens files and does not close the card when an image is closed", async () => {
   const model = cardDetailFixture();
   const fileId = "22222222-2222-4222-8222-222222222222";

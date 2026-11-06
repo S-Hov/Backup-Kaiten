@@ -370,6 +370,145 @@ class BoardApiTests(unittest.TestCase):
             self.assertEqual(session.get(Card, moving).local_version, 2)
             self.assertEqual(len(list(session.scalars(select(models.CardLocationHistory).where(models.CardLocationHistory.card_id == moving)))), 1)
 
+    def test_edit_existing_card_updates_details_board_and_activity_without_changing_source(self):
+        first, second, lane = self.seed_cards()
+        with Session(self.engine) as session, session.begin():
+            card = session.get(Card, first)
+            card.source_data = {'title': 'Оригинал', 'description': '<p>Исходник</p>'}
+            card.source_updated_at = datetime(2020, 1, 1, tzinfo=timezone.utc)
+            number, position = card.display_number, card.sort_order
+        result = self.client.post(f'/api/v1/cards/{first}/edit', json={
+            'version': 1, 'title': '  Уточнённый заказ  ', 'description': '<p>Новые подробности</p>',
+            'asap': True, 'dueDate': '2026-11-10T20:59:59.999Z'})
+        self.assertEqual(result.status_code, 200, result.text)
+        detail = self.client.get(f'/api/v1/cards/{first}/detail').json()
+        self.assertEqual(detail['card']['title'], 'Уточнённый заказ')
+        self.assertEqual(detail['card']['description'], '<p>Новые подробности</p>')
+        self.assertEqual(detail['card']['version'], 2)
+        self.assertTrue(detail['card']['asap'])
+        self.assertEqual(detail['activity'][0]['action'], 'Карточка изменена')
+        self.assertIn('Описание', detail['activity'][0]['data']['Изменены поля'])
+        self.assertEqual(self.card_page(lane, q='Уточнённый').json()['items'][0]['id'], str(first))
+        today = datetime.now(timezone.utc).date().isoformat()
+        updated = self.card_page(lane, date_field='updated', date_from=today, q='Уточнённый').json()['items']
+        self.assertEqual([item['id'] for item in updated], [str(first)])
+        self.assertTrue(detail['card']['updated'].startswith(today))
+        with Session(self.engine) as session:
+            card = session.get(Card, first)
+            self.assertEqual(card.source_data['title'], 'Оригинал')
+            self.assertEqual(card.source_updated_at.year, 2020)
+            self.assertEqual(card.display_number, number)
+            self.assertEqual(card.sort_order, position)
+            self.assertEqual(card.column_id, self.second)
+            self.assertEqual(card.lane_id, lane)
+
+    def test_edit_partial_fields_clear_optional_values_and_reject_stale_write(self):
+        first, second, lane = self.seed_cards()
+        url = f'/api/v1/cards/{first}/edit'
+        with Session(self.engine) as session, session.begin():
+            card = session.get(Card, first)
+            card.description = '<p>Сохранить форматирование</p>'
+            card.due_date = datetime(2026, 11, 15, 10, 30, tzinfo=timezone.utc)
+        self.assertEqual(self.client.post(url, json={'version': 1, 'title': 'Новое название'}).status_code, 200)
+        self.assertEqual(self.client.post(url, json={'version': 1, 'title': 'Старое окно'}).status_code, 409)
+        detail = self.client.get(f'/api/v1/cards/{first}/detail').json()['card']
+        self.assertEqual(detail['description'], '<p>Сохранить форматирование</p>')
+        self.assertIn('10:30', detail['dueDate'])
+        self.assertEqual(self.client.post(url, json={'version': 2, 'description': '', 'dueDate': None, 'asap': False}).status_code, 200)
+        detail = self.client.get(f'/api/v1/cards/{first}/detail').json()['card']
+        self.assertEqual(detail['description'], '')
+        self.assertIsNone(detail['dueDate'])
+        self.assertEqual(detail['title'], 'Новое название')
+        self.assertEqual(detail['version'], 3)
+        self.assertEqual(self.client.post(url, json={'version': 3, 'title': 'Новое название'}).status_code, 200)
+        self.assertEqual(self.client.get(f'/api/v1/cards/{first}/detail').json()['card']['version'], 3)
+
+    def test_edit_catalogs_include_unassigned_values_and_new_tags_can_be_created_without_duplicates(self):
+        first, second, lane = self.seed_cards()
+        user_id, tag_id = uuid4(), uuid4()
+        with Session(self.engine) as session, session.begin():
+            session.add_all([models.User(id=user_id, full_name='Ещё не назначенный', email='private@example.test'),
+                             Tag(id=tag_id, name='Свободный тег'), models.User(full_name='Заглушка', is_stub=True)])
+        result = self.client.get(f'/api/v1/boards/{self.board_id}/edit-options')
+        self.assertEqual(result.status_code, 200, result.text)
+        self.assertIn(str(user_id), [item['id'] for item in result.json()['users']])
+        self.assertIn(str(tag_id), [item['id'] for item in result.json()['tags']])
+        self.assertNotIn('private@example.test', result.text)
+        url = f'/api/v1/boards/{self.board_id}/tags'
+        body = {'name': '  Новый тег  ', 'requestId': str(uuid4())}
+        created = self.client.post(url, json=body)
+        self.assertEqual(created.status_code, 200, created.text)
+        self.assertEqual(created.json()['name'], 'Новый тег')
+        self.assertEqual(self.client.post(url, json=body).json()['id'], created.json()['id'])
+        self.assertEqual(self.client.post(url, json={'name': 'новый ТЕГ', 'requestId': str(uuid4())}).json()['id'], created.json()['id'])
+        self.assertEqual(self.client.post(url, json={'name': '', 'requestId': str(uuid4())}).status_code, 422)
+
+    def test_edit_tags_members_responsibility_and_subscribers_are_atomic_and_update_filters(self):
+        first, second, lane = self.seed_cards()
+        user1, user2, tag_id = uuid4(), uuid4(), uuid4()
+        with Session(self.engine) as session, session.begin():
+            session.add_all([models.User(id=user1, full_name='Анна'), models.User(id=user2, full_name='Борис'), Tag(id=tag_id, name='Новый')])
+        url = f'/api/v1/cards/{first}/edit'
+        body = {'version': 1, 'tagIds': [str(tag_id)], 'members': [{'id': str(user1)}, {'id': str(user2), 'role': 2}], 'subscriberIds': [str(user1)]}
+        result = self.client.post(url, json=body)
+        self.assertEqual(result.status_code, 200, result.text)
+        model = self.client.get(f'/api/v1/cards/{first}/detail').json()
+        self.assertEqual([item['id'] for item in model['tags']], [str(tag_id)])
+        self.assertEqual({(item['id'], item['role']) for item in model['members']}, {(str(user1), 1), (str(user2), 2)})
+        self.assertEqual([item['id'] for item in model['subscribers']], [str(user1)])
+        self.assertEqual(self.card_page(lane, user_id=str(user2), tag_id=str(tag_id)).json()['items'][0]['id'], str(first))
+        bad = self.client.post(url, json={'version': 2, 'title': 'Не записать', 'tagIds': [], 'members': [{'id': str(uuid4())}]})
+        self.assertEqual(bad.status_code, 400)
+        model = self.client.get(f'/api/v1/cards/{first}/detail').json()
+        self.assertEqual(model['card']['version'], 2)
+        self.assertNotEqual(model['card']['title'], 'Не записать')
+        self.assertEqual(model['tags'][0]['id'], str(tag_id))
+        result = self.client.post(url, json={'version': 2, 'tagIds': [], 'members': [], 'subscriberIds': []})
+        self.assertEqual(result.status_code, 200, result.text)
+        model = self.client.get(f'/api/v1/cards/{first}/detail').json()
+        self.assertEqual([model['tags'], model['members'], model['subscribers']], [[], [], []])
+
+    def test_edit_other_fields_properties_and_checklist_items_validate_card_ownership(self):
+        first, second, lane = self.seed_cards()
+        type_id, prop_id, checklist_id, entry_id, other_entry = [uuid4() for _ in range(5)]
+        with Session(self.engine) as session, session.begin():
+            session.add_all([models.CardType(id=type_id, name='Заказ'), models.CustomProperty(id=prop_id, name='Тираж', type='number'),
+                             models.Checklist(id=checklist_id, name='Подготовка'), models.Checklist(name='Чужой', id=other_entry)])
+            session.flush()
+            session.add_all([models.CardChecklist(card_id=first, checklist_id=checklist_id, sort_order=0),
+                             models.ChecklistItem(id=entry_id, checklist_id=checklist_id, text='Макет'),
+                             models.ChecklistItem(id=other_entry, checklist_id=other_entry, text='Чужой пункт')])
+        url = f'/api/v1/cards/{first}/edit'
+        result = self.client.post(url, json={'version': 1, 'typeId': str(type_id), 'sizeText': '500 шт.', 'externalId': 'ABC',
+            'plannedStart': '2026-11-01T09:00:00+03:00', 'properties': [{'id': str(prop_id), 'value': 500}],
+            'checklistItems': [{'id': str(entry_id), 'checked': True, 'text': 'Макет согласован'}]})
+        self.assertEqual(result.status_code, 200, result.text)
+        model = self.client.get(f'/api/v1/cards/{first}/detail').json()
+        self.assertEqual(model['card']['type']['id'], str(type_id))
+        self.assertEqual(model['card']['sizeText'], '500 шт.')
+        self.assertEqual(model['properties'][0]['value'], 500)
+        self.assertTrue(model['checklists'][0]['items'][0]['checked'])
+        self.assertEqual(model['checklists'][0]['items'][0]['text'], 'Макет согласован')
+        for changes in ({'checklistItems': [{'id': str(other_entry), 'checked': True}]},
+                        {'properties': [{'id': str(prop_id), 'value': 'Не число'}]}, {'typeId': str(uuid4())}):
+            result = self.client.post(url, json={'version': 2, **changes})
+            self.assertEqual(result.status_code, 400, result.text)
+        self.assertEqual(self.client.get(f'/api/v1/cards/{first}/detail').json()['card']['version'], 2)
+
+    def test_edit_validates_input_and_rejects_archived_deleted_stub_and_missing_cards(self):
+        first, second, lane = self.seed_cards()
+        url = f'/api/v1/cards/{first}/edit'
+        for changes in ({'title': ''}, {'title': '   '}, {'title': 'x' * 501}, {'title': None},
+                        {'description': None}, {'description': 'x' * 100001}, {'asap': None}, {'asap': 'yes'},
+                        {'dueDate': 'bad'}, {'dueDate': '2026-11-01T10:00:00'}, {'columnId': str(self.child)}, {}):
+            result = self.client.post(url, json={'version': 1, **changes})
+            self.assertEqual(result.status_code, 422, result.text)
+        with Session(self.engine) as session:
+            rows = list(session.scalars(select(Card).where(Card.board_id == self.board_id)))
+            invalid = [(row.id, 400 if row.archived else 404) for row in rows if row.archived or row.is_stub or row.deleted_at]
+        for identifier, status in invalid + [(uuid4(), 404)]:
+            self.assertEqual(self.client.post(f'/api/v1/cards/{identifier}/edit', json={'version': 1, 'title': 'Нельзя'}).status_code, status)
+
     def test_move_reorders_within_cell_and_moves_between_lanes_and_empty_cells(self):
         first, second, lane = self.seed_cards()
         url = f'/api/v1/cards/{second}/move'
